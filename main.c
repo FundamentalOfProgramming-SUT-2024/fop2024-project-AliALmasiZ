@@ -16,5 +16,6 @@ int main() {
     int choose = init_menu();
     
     refresh();
+    endwin();
 
 }
