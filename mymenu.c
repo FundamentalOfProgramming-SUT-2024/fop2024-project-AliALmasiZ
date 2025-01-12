@@ -1,6 +1,9 @@
 #include "mymenu.h"
 #include <ncurses.h>
 #include <stdio.h>
+#include <unistd.h>
+#include <locale.h>
+#include <wchar.h>
 
 void draw_logo(int y) {
     int currenty = y;
@@ -27,8 +30,8 @@ int init_menu() {
     int choice = 0;
     win_height = 10;
     win_width = 40;
-    int start_y = (LINES) / 2;
-    int start_x = (COLS) / 2;
+    int start_y = (LINES - win_height - 7) / 2 + 7;
+    int start_x = (COLS - win_width) / 2 ;
     menu_win = newwin(win_height, win_width, start_y, start_x);
     keypad(menu_win, true);
 
@@ -62,9 +65,35 @@ int init_menu() {
         case '\n':
             
             wattroff(menu_win, COLOR_PAIR(1));
+            wclear(menu_win);
+            clear();
+            delwin(menu_win);
             return choice;
         }
 
         // refresh();
     }
 }
+
+void goodbye_logo() {
+    clear();
+    wchar_t *line[] = {
+        L" ░▒▓██████▓▒░   ░▒▓██████▓▒░   ░▒▓██████▓▒░  ░▒▓███████▓▒░  ░▒▓███████▓▒░  ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓████████▓▒░ ",
+        L"░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░        ",
+        L"░▒▓█▓▒░        ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░        ",
+        L"░▒▓█▓▒▒▓███▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓███████▓▒░   ░▒▓██████▓▒░  ░▒▓██████▓▒░   ",
+        L"░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░    ░▒▓█▓▒░     ░▒▓█▓▒░        ",
+        L"░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░    ░▒▓█▓▒░     ░▒▓█▓▒░        ",
+        L" ░▒▓██████▓▒░   ░▒▓██████▓▒░   ░▒▓██████▓▒░  ░▒▓███████▓▒░  ░▒▓███████▓▒░     ░▒▓█▓▒░     ░▒▓████████▓▒░ ",
+    };
+        attron(COLOR_PAIR(2));
+        for(int i = 0; i < 7; i++) {
+            mvprintw(LINES / 2 - 3 + i, (COLS - 106) / 2,"%ls", line[i]);
+        }
+        
+        refresh();
+        attroff(COLOR_PAIR(2));
+        sleep(2);
+        endwin();
+}
+
