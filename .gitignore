@@ -1,0 +1,24 @@
+#executable files
+*.o
+*.out
+*.exe
+
+# User-specific directories
+.vscode/
+.idea/
+*.user
+*.suo
+*.userprefs
+
+# Dependency directories
+/bin/
+/lib/
+/lib64/
+/build/
+/vendor/
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+Testing/s
