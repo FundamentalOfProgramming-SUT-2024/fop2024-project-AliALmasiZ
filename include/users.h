@@ -2,12 +2,12 @@
 #define USERS_H
 
 #define MAX_USERS 1000
-#define MAX_SIZE 256
+#define MAX_LEN 256
 
 typedef struct {
-    char username[MAX_SIZE];
-    char password[MAX_SIZE];
-    char email[MAX_SIZE];
+    char username[MAX_LEN];
+    char password[MAX_LEN];
+    char email[MAX_LEN];
     int score;
     int gold;
 }Users;

@@ -1,9 +1,11 @@
-#include "menu.h"
+#include "../include/mymenu.h"
+#include "../include/users.h"
 #include <ncurses.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <locale.h>
 #include <wchar.h>
+
 
 void draw_logo(int y) {
     int currenty = y;
@@ -15,7 +17,11 @@ void draw_logo(int y) {
     mvprintw(currenty++, startx, " |  _  /| |  | | | |_ | |  | |  __|  ");
     mvprintw(currenty++, startx, " | | \\ \\| |__| | |__| | |__| | |____ ");
     mvprintw(currenty++, startx, " |_|  \\_\\\\____/ \\_____|\\____/|______|");
-    mvprintw(currenty++, startx, "                                     ");
+    mvprintw(currenty++, startx, "                                     \n");
+    attron(COLOR_PAIR(3));
+    mvprintw(currenty + 2, startx + 11, "Credit: Ali Almasi");
+    attroff(COLOR_PAIR(3));
+
 }
 
 
@@ -108,7 +114,7 @@ void goodbye_logo() {
         L" ░▒▓██████▓▒░   ░▒▓██████▓▒░   ░▒▓██████▓▒░  ░▒▓███████▓▒░  ░▒▓███████▓▒░     ░▒▓█▓▒░     ░▒▓████████▓▒░ ",
     };
         attron(COLOR_PAIR(2));
-        if(LINES > 6 && COLS > 106) {
+        if(LINES > 6 && COLS > 104) {
             for(int i = 0; i < 7; i++) {
                 mvprintw(LINES / 2 - 3 + i, (COLS - 106) / 2,"%ls", line[i]);
             }
@@ -123,6 +129,16 @@ void goodbye_logo() {
         endwin();
 }
 
-int sign_in_menu() {
-    
+int sign_in_menu(Users **arr) {
+    char *questions[] = {
+        "Username: ",
+        "Email: ",
+        "Password: "
+    };
+    char input[MAX_LEN];
+    echo();
+    mvprintw((LINES - 7) / 2 + 7, COLS / 2 - 2, "%s", questions[1]);
+    getnstr(input, MAX_LEN);
+    noecho();
+    refresh();
 }

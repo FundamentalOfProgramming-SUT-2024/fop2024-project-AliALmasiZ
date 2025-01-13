@@ -21,4 +21,15 @@
 CMakeCache.txt
 CMakeFiles/
 CMakeScripts/
-Testing/s
+Testing/
+
+#build and test
+build/
+tests/
+
+#Shell
+*.sh
+
+#Temporary
+*.log
+*.bin

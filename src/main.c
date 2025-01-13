@@ -1,5 +1,5 @@
-#include "menu.h"
-#include"users.h"
+#include "mymenu.h"
+#include "users.h"
 #include <ncurses.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -22,6 +22,7 @@ int main() {
     // color pairs :                    
     init_pair(1, COLOR_WHITE, COLOR_BLACK);
     init_pair(2, COLOR_GREEN, COLOR_BLACK);
+    init_pair(3, COLOR_RED, COLOR_BLACK);
     int choose = init_menu();
     if (choose == 3) {
 
