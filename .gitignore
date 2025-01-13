@@ -26,6 +26,7 @@ Testing/
 #build and test
 build/
 tests/
+test*
 
 #Shell
 *.sh
