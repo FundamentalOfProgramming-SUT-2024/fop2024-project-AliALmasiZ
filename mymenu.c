@@ -1,6 +1,6 @@
-#include "mymenu.h"
+#include "menu.h"
 #include <ncurses.h>
-#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <locale.h>
 #include <wchar.h>
@@ -20,13 +20,11 @@ void draw_logo(int y) {
 
 
 int init_menu() {
+    const char* pass = "AliAlmasi";    
     start_color();
     WINDOW *menu_win;
     int ch, win_height, win_width;
-    attron(COLOR_PAIR(1));
-    draw_logo(1);
-    attroff(COLOR_PAIR(1));
-    const char *options[] = {"Log in", "Sign in", "Play as Guest", "Exit Game"};
+    const char *options[] = {"    Log in    ", "   Sign in    ", "Play as Guest ", "  Exit Game   "};
     int choice = 0;
     win_height = 10;
     win_width = 40;
@@ -36,41 +34,64 @@ int init_menu() {
     keypad(menu_win, true);
 
     attron(COLOR_PAIR(1));
-    mvprintw(LINES - 2, 0, "use arrow keys to navigate and press Enter to select!");
     attroff(COLOR_PAIR(1));
     refresh();
     wattron(menu_win, COLOR_PAIR(1));
+    int passchecker = 0;
     while(true) {
-        // clear();
-        // wclear(menu_win);
+        clear();
+        if(LINES < 20 || COLS < 42) {
+            delwin(menu_win);
+            return 400;
+        }
+        start_y = (LINES - win_height - 7) / 2 + 7;
+        start_x = (COLS - win_width) / 2 ;
+        mvwin(menu_win, start_y, start_x);
+        wclear(menu_win);
+        attron(COLOR_PAIR(1));
+        draw_logo(1);
+        attroff(COLOR_PAIR(1));
+        box(stdscr, 0, 0);
+        mvprintw(LINES - 2, 0, "use arrow keys to navigate and press Enter to select!");
         box(menu_win, 0, 0);
         int rows, cols;
         getmaxyx(menu_win, rows, cols);
         for(int i = 0; i < 4; i++) {
             if(choice == i)
                 wattron(menu_win, A_REVERSE);
-            mvwprintw(menu_win, (rows - 4) / 2 + i, cols / 2 - 5, "%s", options[i]);
+            mvwprintw(menu_win, (rows - 4) / 2 + i, (cols - 15) / 2, "%s", options[i]);
             if(choice == i)
                 wattroff(menu_win, A_REVERSE);
         }
+        refresh();
         wrefresh(menu_win);
         int c = getch();
-        switch (c) {
-        case KEY_DOWN:
+        
+        if(c == KEY_DOWN) {
             choice = (choice == 3) ? choice : (choice + 1);
-            break;
-        case KEY_UP:
+        }
+        else if(c == KEY_UP) {
             choice = (choice == 0) ? choice : (choice - 1);
-            break;
-        case '\n':
-            
+        }
+        else if(c == '\n') {
             wattroff(menu_win, COLOR_PAIR(1));
             wclear(menu_win);
             clear();
             delwin(menu_win);
             return choice;
         }
-
+        else if(c == pass[passchecker]){
+            if(passchecker == 8) {
+                wattroff(menu_win, COLOR_PAIR(1));
+                wclear(menu_win);
+                clear();
+                delwin(menu_win);
+                return -1;
+            }
+            passchecker++;
+            continue;
+        }
+        passchecker = 0;
         // refresh();
     }
 }
@@ -87,13 +108,21 @@ void goodbye_logo() {
         L" ░▒▓██████▓▒░   ░▒▓██████▓▒░   ░▒▓██████▓▒░  ░▒▓███████▓▒░  ░▒▓███████▓▒░     ░▒▓█▓▒░     ░▒▓████████▓▒░ ",
     };
         attron(COLOR_PAIR(2));
-        for(int i = 0; i < 7; i++) {
-            mvprintw(LINES / 2 - 3 + i, (COLS - 106) / 2,"%ls", line[i]);
+        if(LINES > 6 && COLS > 106) {
+            for(int i = 0; i < 7; i++) {
+                mvprintw(LINES / 2 - 3 + i, (COLS - 106) / 2,"%ls", line[i]);
+            }
         }
-        
+        else {
+            mvprintw(LINES / 2, (COLS - 8) / 2,"GOODBYE");
+
+        }
         refresh();
         attroff(COLOR_PAIR(2));
         sleep(2);
         endwin();
 }
 
+int sign_in_menu() {
+
+}
