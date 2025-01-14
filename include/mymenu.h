@@ -8,7 +8,7 @@
 #include <wchar.h>
 
 
-extern int init_menu(char* message, int color);
+extern int menu(char* message, int color, const char **options, int size);
 extern void goodbye_logo();
 extern int sign_up_menu(Users **arr, int *n);
 extern void draw_logo(int y, char *message, int color_pair);

@@ -20,12 +20,11 @@ void draw_logo(int y, char *message, int color_pair) {
 }
 
 
-int init_menu(char* message, int color) {
-    const char* pass = "AliAlmasi";    
+int menu(char* message, int color, const char **options, int size) {
+    const char* pass = "*AliAlmasi";    
     start_color();
     WINDOW *menu_win;
     int ch, win_height, win_width;
-    const char *options[] = {"    Log in    ", "   Sign up    ", "Play as Guest ", "  Exit Game   "};
     int choice = 0;
     win_height = 10;
     win_width = 40;
@@ -57,7 +56,7 @@ int init_menu(char* message, int color) {
         box(menu_win, 0, 0);
         int rows, cols;
         getmaxyx(menu_win, rows, cols);
-        for(int i = 0; i < 4; i++) {
+        for(int i = 0; i < size; i++) {
             if(choice == i)
                 wattron(menu_win, A_REVERSE);
             mvwprintw(menu_win, (rows - 4) / 2 + i, (cols - 15) / 2, "%s", options[i]);
@@ -69,7 +68,7 @@ int init_menu(char* message, int color) {
         int c = getch();
         
         if(c == KEY_DOWN) {
-            choice = (choice == 3) ? choice : (choice + 1);
+            choice = (choice == size - 1) ? choice : (choice + 1);
         }
         else if(c == KEY_UP) {
             choice = (choice == 0) ? choice : (choice - 1);
@@ -82,7 +81,7 @@ int init_menu(char* message, int color) {
             return choice;
         }
         else if(c == pass[passchecker]){
-            if(passchecker == 8) {
+            if(passchecker == 9) {
                 wattroff(menu_win, COLOR_PAIR(1));
                 wclear(menu_win);
                 clear();
@@ -253,7 +252,7 @@ int login_menu(Users **arr, int n) {
             draw_logo(1, "Wrong password", 3);
             continue;
         }
-        break; 
+        return 1;
     }
 }
 

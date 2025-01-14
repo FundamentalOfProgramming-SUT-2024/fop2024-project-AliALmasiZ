@@ -21,7 +21,8 @@ int main() {
     init_pair(4, COLOR_MAGENTA, COLOR_BLACK);
     init_pair(5, COLOR_CYAN, COLOR_BLACK);
     //----------------------------------------------
-    int choose = init_menu("Credit: Ali Almasi", 3);
+    const char *options[] = {"    Log in    ", "   Sign up    ", "Play as Guest ", "  Exit Game   "};
+    int choose = menu("Credit: Ali Almasi", 3, options, 4);
     while(1) {
         if (choose == 3) {
 
@@ -34,11 +35,11 @@ int main() {
         }
         else if(choose == 1) { //sign in
             sign_up_menu(&arr, &users_count);
-            choose = init_menu("User registered successfully", 2);
+            choose = menu("User registered successfully", 2, options, 4);
 
         }
         else if(choose == 2) { //guest
-            choose = init_menu("Credit: Ali Almasi", 3);
+            choose = menu("Credit: Ali Almasi", 3, options, 4);
         }
         else if (choose == -1) {
             endwin();

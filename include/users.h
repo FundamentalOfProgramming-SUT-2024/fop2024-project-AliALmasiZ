@@ -26,5 +26,4 @@ extern int check_email(char *email);
 extern int pass_check(char *pass);
 extern Users *active_user;
 
-
 #endif
