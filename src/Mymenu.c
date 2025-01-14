@@ -25,7 +25,7 @@ int init_menu(char* message, int color) {
     start_color();
     WINDOW *menu_win;
     int ch, win_height, win_width;
-    const char *options[] = {"    Log in    ", "   Sign in    ", "Play as Guest ", "  Exit Game   "};
+    const char *options[] = {"    Log in    ", "   Sign up    ", "Play as Guest ", "  Exit Game   "};
     int choice = 0;
     win_height = 10;
     win_width = 40;
@@ -124,7 +124,7 @@ void goodbye_logo() {
         endwin();
 }
 
-int sign_in_menu(Users **arr, int *n) {
+int sign_up_menu(Users **arr, int *n) {
     char username[MAX_LEN] = {};
     char email[MAX_LEN] = {};
     char pass[MAX_LEN] = {};
@@ -166,14 +166,16 @@ int sign_in_menu(Users **arr, int *n) {
         break;
     }
     while (true) {
-        echo();
         attron(COLOR_PAIR(4));
         mvprintw((LINES - 7) / 2 + 7, (COLS - 60) / 2 , "%s", "Password: (type ':rand' to generate random password)");
         getnstr(pass, MAX_LEN);
-        noecho();
         attroff(COLOR_PAIR(4));
         refresh();
         clear();
+        if(!strcmp(pass, ":rand")) {
+            mvprintw((LINES - 7) / 2 + 5, (COLS - 45) / 2, "your generated password is : '%s'", "test");
+            
+        }
         int test = pass_check(pass);
         if(((test >> 3) & 1 )!= 1) {
             attron(COLOR_PAIR(3));
@@ -193,6 +195,7 @@ int sign_in_menu(Users **arr, int *n) {
             attroff(COLOR_PAIR(3));
             continue;
         }
+
         if((test & 1 )!= 1) {
             attron(COLOR_PAIR(3));
             mvprintw((LINES - 7) / 2 + 5, (COLS - 41) / 2, "Your password must contain lower letter.");
@@ -202,9 +205,58 @@ int sign_in_menu(Users **arr, int *n) {
         break;
     }
     curs_set(false);
-    sign_in(arr, n, username, pass, email);
+    sign_up(arr, n, username, pass, email);
+    return 0;
 }
 
 int login_menu(Users **arr, int n) {
-    
+    char username[MAX_LEN], password[MAX_LEN];
+    draw_logo(1, "Login User :", 5);
+    attron(COLOR_PAIR(4));
+    mvprintw((LINES - 10) / 2 + 1, (COLS - 12) / 2, "Username : ");
+    mvprintw((LINES - 10) / 2 + 3, (COLS - 12) / 2, "Password : ");
+    attroff(COLOR_PAIR(4));
+    Users *temp = NULL;
+    while(1) {
+        attron(COLOR_PAIR(4));
+        mvprintw((LINES - 10) / 2 + 1, (COLS - 12) / 2, "Username : ");
+        mvprintw((LINES - 10) / 2 + 3, (COLS - 12) / 2, "Password : ");
+        move((LINES - 10) / 2 + 1, (COLS - 12) / 2 + 11);
+        attroff(COLOR_PAIR(4));
+        if(temp != NULL) {
+            draw_logo(1, "Enter Password for user", 2);
+            break;
+        }
+        echo();
+        getnstr(username, MAX_LEN);
+        noecho();
+        temp = check_username(arr, n, username);
+        if(temp == NULL) {
+            clear();
+            draw_logo(1, "User didn't find!", 3);
+            refresh();
+            continue;
+        }
+    }
+    while (1) {
+        echo();
+        attron(COLOR_PAIR(4));
+        mvprintw((LINES - 10) / 2 + 1, (COLS - 12) / 2, "Username : ");
+        mvprintw((LINES - 10) / 2 + 3, (COLS - 12) / 2, "Password : ");
+        attroff(COLOR_PAIR(4));
+        mvprintw((LINES - 10) / 2 + 1, (COLS - 12) / 2 + 11, "%s", username);
+        move((LINES - 10) / 2 + 3, (COLS - 12) / 2 + 11);
+        getnstr(password, MAX_LEN);
+        noecho();
+        clear();
+        if(!log_in(arr, n, username, password)) {
+            draw_logo(1, "Wrong password", 3);
+            continue;
+        }
+        break; 
+    }
+}
+
+int pregame_menu() {
+
 }

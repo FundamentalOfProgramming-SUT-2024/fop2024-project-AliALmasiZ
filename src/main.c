@@ -1,7 +1,6 @@
 #include "mymenu.h"
 #include "users.h"
-
-
+Users *active_user;
 
 int main() {
     Users *arr = calloc(MAX_USERS, sizeof(Users));
@@ -20,6 +19,7 @@ int main() {
     init_pair(2, COLOR_GREEN, COLOR_BLACK);
     init_pair(3, COLOR_RED, COLOR_BLACK);
     init_pair(4, COLOR_MAGENTA, COLOR_BLACK);
+    init_pair(5, COLOR_CYAN, COLOR_BLACK);
     //----------------------------------------------
     int choose = init_menu("Credit: Ali Almasi", 3);
     while(1) {
@@ -29,11 +29,12 @@ int main() {
             return 0;
         }
         else if (choose == 0) { //login
-            choose = init_menu("Credit: Ali Almasi", 3);
+            login_menu(&arr, users_count);
+            break;
         }
         else if(choose == 1) { //sign in
-            sign_in_menu(&arr, &users_count);
-            choose = init_menu("User signed in successfully", 2);
+            sign_up_menu(&arr, &users_count);
+            choose = init_menu("User registered successfully", 2);
 
         }
         else if(choose == 2) { //guest
@@ -55,7 +56,8 @@ int main() {
             return 0;
         }
     }
-    refresh();
     endwin();
+    refresh();
+    return 0;
 
 }

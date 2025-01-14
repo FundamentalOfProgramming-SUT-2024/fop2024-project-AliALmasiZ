@@ -1,7 +1,6 @@
 #include "users.h"
 
 
-
 int compare_name(const void *a, const void *b) {
     return strcmp((*(Users *)a).username, (*(Users *)b).username);
 }
@@ -24,7 +23,7 @@ void save_users(Users **arr, int users_count) {
         fwrite(*arr + i, sizeof(Users), 1, usersfile);
     }
 }
-void sign_in(Users **arr, int *users_count, const char *username, const char *pass, const char *email) {
+void sign_up(Users **arr, int *users_count, const char *username, const char *pass, const char *email) {
     strcpy((*arr + *users_count)->email, email);
     strcpy((*arr + *users_count)->username, username);
     strcpy((*arr + *users_count)->password, pass);
@@ -32,11 +31,18 @@ void sign_in(Users **arr, int *users_count, const char *username, const char *pa
     save_users(arr, *users_count);
 
 }
-int log_in(Users **arr, int *uesrs_count, const char *username, const char *password) {
-    
+int log_in(Users **arr, int users_count, const char *username, const char *password) {
+    Users *temp = (Users *)check_username(arr, users_count, username);
+    if(strcmp(password, temp->password)) {
+        return 0;
+    }
+    else {
+        active_user = temp;
+        return 1;        
+    }
 }
 
-void *check_username(Users **arr, int n, char *username) {
+void *check_username(Users **arr, int n, const char *username) {
     Users temp;
     strcpy(temp.username, username);
     return bsearch(&temp, *arr, n, sizeof(Users), compare_name);

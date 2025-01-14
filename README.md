@@ -5,8 +5,8 @@
 ___
 # Features :
 ## Menu :
-- [ ] Signin Menu
-- [ ] Login Menu
+- [x] Signin Menu
+- [x] Login Menu
 - [ ] Guest
 - [ ] PreGame Menu
 - [ ] New Game

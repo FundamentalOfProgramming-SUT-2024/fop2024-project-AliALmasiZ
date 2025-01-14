@@ -19,10 +19,12 @@ typedef struct {
 
 extern int load_users(Users **arr);
 extern void save_users(Users **arr, int users_count);
-extern void sign_in(Users **arr, int *users_count, const char *username, const char *pass, const char *email);
-extern int log_in(Users **arr, int *uesrs_count, const char *username, const char *password);
-extern void *check_username(Users **arr, int n, char *username);
+extern void sign_up(Users **arr, int *users_count, const char *username, const char *pass, const char *email);
+extern int log_in(Users **arr, int users_count, const char *username, const char *password);
+extern void *check_username(Users **arr, int n, const char *username);
 extern int check_email(char *email);
 extern int pass_check(char *pass);
+extern Users *active_user;
+
 
 #endif

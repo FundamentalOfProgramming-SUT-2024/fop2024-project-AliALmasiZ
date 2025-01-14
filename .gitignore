@@ -2,6 +2,7 @@
 *.o
 *.out
 *.exe
+Rogue
 
 # User-specific directories
 .vscode/
