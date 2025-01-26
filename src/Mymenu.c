@@ -225,15 +225,15 @@ int login_menu(Users **arr, int n) {
     char username[MAX_LEN], password[MAX_LEN];
     draw_logo(1, "Login User :", 5);
     attron(COLOR_PAIR(4));
-    mvprintw((LINES - 10) / 2 + 3, (COLS - 12) / 2, "Username : ");
-    mvprintw((LINES - 10) / 2 + 5, (COLS - 12) / 2, "Password : ");
+    mvprintw((LINES - 10) / 2 + 3, (COLS - 30) / 2, "Username : ");
+    mvprintw((LINES - 10) / 2 + 5, (COLS - 30) / 2, "Password : ");
     attroff(COLOR_PAIR(4));
     Users *temp = NULL;
     while(1) {
         attron(COLOR_PAIR(4));
-        mvprintw((LINES - 10) / 2 + 3, (COLS - 12) / 2, "Username : ");
-        mvprintw((LINES - 10) / 2 + 5, (COLS - 12) / 2, "Password : ");
-        move((LINES - 10) / 2 + 3, (COLS - 12) / 2 + 11);
+        mvprintw((LINES - 10) / 2 + 3, (COLS - 30) / 2, "Username : ");
+        mvprintw((LINES - 10) / 2 + 5, (COLS - 30) / 2, "Password : ");
+        move((LINES - 10) / 2 + 3, (COLS - 30) / 2 + 11);
         attroff(COLOR_PAIR(4));
         if(temp != NULL) {
             draw_logo(1, "Enter Password for user", 2);
@@ -249,19 +249,18 @@ int login_menu(Users **arr, int n) {
         temp = check_username(arr, n, username);
         if(temp == NULL) {
             clear();
-            draw_logo(1, username, 3);
-            // draw_logo(1, "User didn't find!", 3);
+            draw_logo(1, "User didn't find!", 3);
             refresh();
             continue;
         }
     }
     while (1) {
         attron(COLOR_PAIR(4));
-        mvprintw((LINES - 10) / 2 + 3, (COLS - 12) / 2, "Username : ");
-        mvprintw((LINES - 10) / 2 + 5, (COLS - 12) / 2, "Password : ");
+        mvprintw((LINES - 10) / 2 + 5, (COLS - 30) / 2, "Password : ");
+        mvprintw((LINES - 10) / 2 + 3, (COLS - 30) / 2, "Username : ");
         attroff(COLOR_PAIR(4));
-        mvprintw((LINES - 10) / 2 + 3, (COLS - 12) / 2 + 11, "%s", username);
-        move((LINES - 10) / 2 + 5, (COLS - 12) / 2 + 11);
+        mvprintw((LINES - 10) / 2 + 3, (COLS - 30) / 2 + 11, "%s", username);
+        move((LINES - 10) / 2 + 5, (COLS - 30) / 2 + 11);
         // getnstr(password, MAX_LEN);
         int val = getstring(stdscr, password, MAX_LEN, 0);
         if(val == 27) {
@@ -340,50 +339,51 @@ int getstring(WINDOW* win, char* str, int n, int echo) {
             strncpy(str, temp, count);
             str[count] = 0;
             free(temp);
+            curs_set(0);
             return 0;
         }
         else if(c == 27) {
+            free(temp);
+            curs_set(0);
             return 27;
         }
-        else if(c == KEY_BACKSPACE || c == KEY_DC || c == 127) {
-            if(count == 0) {
-                continue;
-            }
+        else if(c == KEY_BACKSPACE || c == 127) {
+        
             getyx(win, y, x);
-            mvaddch(y, x - 1, ' ');
-            move(y, x - 1);
+            if(startx == x)
+                continue;
+            mvwaddch(win, y, x - 1, ' ');
+            wmove(win, y, x - 1);
             count--;
+            temp[count] = 0;
             continue;
         }
-        else if(count == n) {
-            continue;
-        }
-        else if(echo == 0) {
-            if(c == KEY_F(1)) {
-                move(starty, startx);
-                for(int i = 0; i < count; i++) {
-                    printw(" ");
-                }
-                strcpy(temp, random_password());
-                count = strlen(temp);
-                mvprintw(starty, startx, "%s", temp);
+        else if(c == KEY_F(1) && echo == 0) {
+            move(starty, startx);
+            for(int i = 0; i < count; i++) {
+                printw(" ");
             }
-            
-            else
+            strcpy(temp, random_password());
+            count = strlen(temp);
+            mvprintw(starty, startx, "%s", temp);
+        }
+        else if(count < n - 1 && c >= 32 && c <= 126) {
+            if(echo == 0) {
                 printw("%c", '*');
+            }
+            else {
+                printw("%c", c);
+            }
+            temp[count] = c;
+            count++;
         }
-        else {
-            printw("%c", c);
-        }
-        temp[count] = c;
-        count++;
     }
     curs_set(0);
 }
 
 char *random_password() {
 
-    int len = 10 + rand() % 10;
+    int len = 15 + rand() % 10;
     char *res = malloc((len + 1) * sizeof(char));
     for(int i = 0; i < len; i++) {
         //32  - 126

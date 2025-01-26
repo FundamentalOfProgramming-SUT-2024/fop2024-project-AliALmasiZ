@@ -7,9 +7,6 @@ int main() {
     srand(time(NULL));
     arr = calloc(MAX_USERS, sizeof(Users));
     users_count = load_users(&arr);
-    for(int i = 0; i < users_count; i++) {
-        printf("%s\n", arr[i].username);
-    }
     //--------------initial commands----------------
     setlocale(LC_ALL, "");
     initscr();
@@ -52,7 +49,7 @@ int main() {
             choose = menu(s, 2, options, 4);
         }
         else if(choose == 2) { //guest
-            choose = menu("Credit: Ali Almasi", 3, options, 4);
+            pregame_menu();
         }
         else if (choose == -1) {
             endwin();
@@ -66,8 +63,8 @@ int main() {
             clear();
             refresh();
             endwin();
-            printf("Somthing went wrong\nError code : %d", choose);
-            return 0;
+            printf("Somthing went wrong");
+            return choose;
 
         }
     }
