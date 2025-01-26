@@ -8,11 +8,17 @@
 #include <wchar.h>
 
 
-extern int menu(char* message, int color, const char **options, int size);
-extern void goodbye_logo();
-extern int sign_up_menu(Users **arr, int *n);
-extern void draw_logo(int y, char *message, int color_pair);
-extern int login_menu(Users **arr, int n);
+int menu(char* message, int color, const char **options, int size);
+void goodbye_logo();
+int sign_up_menu(Users **arr, int *n);
+void draw_logo(int y, char *message, int color_pair);
+int login_menu(Users **arr, int n);
+int pregame_menu();
+void scoreboard();
+int getstring(WINDOW* win, char* str, int n, int echo);
+char *random_password();
+
+
 #endif
 
 

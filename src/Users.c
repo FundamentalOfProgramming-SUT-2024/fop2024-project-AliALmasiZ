@@ -1,10 +1,12 @@
-#include "users.h"
+#include "../include/users.h"
 
 
 int compare_name(const void *a, const void *b) {
     return strcmp((*(Users *)a).username, (*(Users *)b).username);
 }
-
+int compare_score(const void *a, const void *b) {
+    return (*(Users*)a).score - (*(Users*)b).score;
+}
 int load_users(Users **arr) {
     FILE *usersfile = fopen("users.bin", "rb");
     if(usersfile == NULL) {
@@ -14,6 +16,7 @@ int load_users(Users **arr) {
     while(fread(*arr + i, sizeof(Users), 1, usersfile) == 1){
         i++;
     }
+    fclose(usersfile);
     return i;
 }
 void save_users(Users **arr, int users_count) {
@@ -22,6 +25,7 @@ void save_users(Users **arr, int users_count) {
     for(int i = 0; i < users_count; i++) {
         fwrite(*arr + i, sizeof(Users), 1, usersfile);
     }
+    fclose(usersfile);
 }
 void sign_up(Users **arr, int *users_count, const char *username, const char *pass, const char *email) {
     strcpy((*arr + *users_count)->email, email);
@@ -29,7 +33,8 @@ void sign_up(Users **arr, int *users_count, const char *username, const char *pa
     strcpy((*arr + *users_count)->password, pass);
     (*users_count)++;
     save_users(arr, *users_count);
-
+    (*arr + *users_count)->start_time = time(NULL);
+    
 }
 int log_in(Users **arr, int users_count, const char *username, const char *password) {
     Users *temp = (Users *)check_username(arr, users_count, username);
@@ -51,7 +56,6 @@ void *check_username(Users **arr, int n, const char *username) {
 int check_email(char *email) {
     regex_t regex;
     int num;
-
     regcomp(&regex, "^[a-zA-Z0-9_]+@[a-zA-Z0-9]+\\.[a-zA-Z]+$", REG_EXTENDED);
     num = regexec(&regex, email, 0, NULL, 0);
     if(num == REG_NOMATCH) {

@@ -1,5 +1,5 @@
-#include "mymenu.h"
-#include "users.h"
+#include "../include/mymenu.h"
+#include "../include/users.h"
 
 
 void draw_logo(int y, char *message, int color_pair) {
@@ -13,10 +13,9 @@ void draw_logo(int y, char *message, int color_pair) {
     mvprintw(currenty++, startx, " | | \\ \\| |__| | |__| | |__| | |____ ");
     mvprintw(currenty++, startx, " |_|  \\_\\\\____/ \\_____|\\____/|______|");
     mvprintw(currenty++, startx, "                                     \n");
-    attron(COLOR_PAIR(color_pair));
+    attron(COLOR_PAIR(color_pair) | A_BOLD);
     mvprintw(currenty + 2, startx + (40 - strlen(message)) / 2, "%s", message);
-    attroff(COLOR_PAIR(color_pair));
-
+    attroff(COLOR_PAIR(color_pair) | A_BOLD);
 }
 
 
@@ -132,9 +131,15 @@ int sign_up_menu(Users **arr, int *n) {
         draw_logo(1 , "Credit: Ali Almasi", 3);
         echo();
         attron(COLOR_PAIR(4));
-        mvprintw((LINES - 7) / 2 + 7, (COLS - 11) / 2, "%s", "Username: ");
+        mvprintw((LINES - 7) / 2 + 7, (COLS - 30) / 2, "%s", "Username: ");
         
-        getnstr(username, MAX_LEN);
+        // getnstr(username, MAX_LEN);
+        int val = getstring(stdscr, username, MAX_LEN, 1);
+        if (val == 27) {
+            clear();
+            refresh();
+            return 27;
+        }
         noecho();
         attroff(COLOR_PAIR(4));
         refresh();
@@ -150,8 +155,14 @@ int sign_up_menu(Users **arr, int *n) {
     while (true) {
         echo();
         attron(COLOR_PAIR(4));        
-        mvprintw((LINES - 7) / 2 + 7, (COLS - 8)/ 2, "%s", "Email: ");
-        getnstr(email, MAX_LEN);
+        mvprintw((LINES - 7) / 2 + 7, (COLS - 30)/ 2, "%s", "Email: ");
+        // getnstr(email, MAX_LEN);
+        int val = getstring(stdscr, email, MAX_LEN, 1);
+        if(val == 27) {
+            clear();
+            refresh();
+            return 27;
+        }
         noecho();
         attroff(COLOR_PAIR(4));
         refresh();
@@ -166,15 +177,17 @@ int sign_up_menu(Users **arr, int *n) {
     }
     while (true) {
         attron(COLOR_PAIR(4));
-        mvprintw((LINES - 7) / 2 + 7, (COLS - 60) / 2 , "%s", "Password: (type ':rand' to generate random password)");
-        getnstr(pass, MAX_LEN);
+        mvprintw((LINES - 7) / 2 + 7, (COLS - 60) / 2 , "%s", "Password(press F1 key to generate random):");
+        // getnstr(pass, MAX_LEN);
+        int val = getstring(stdscr, pass, MAX_LEN, 0);
+        if(val == 27) {
+            clear();
+            refresh();
+            return 27;
+        }
         attroff(COLOR_PAIR(4));
         refresh();
         clear();
-        if(!strcmp(pass, ":rand")) {
-            mvprintw((LINES - 7) / 2 + 5, (COLS - 45) / 2, "your generated password is : '%s'", "test");
-            
-        }
         int test = pass_check(pass);
         if(((test >> 3) & 1 )!= 1) {
             attron(COLOR_PAIR(3));
@@ -212,41 +225,50 @@ int login_menu(Users **arr, int n) {
     char username[MAX_LEN], password[MAX_LEN];
     draw_logo(1, "Login User :", 5);
     attron(COLOR_PAIR(4));
-    mvprintw((LINES - 10) / 2 + 1, (COLS - 12) / 2, "Username : ");
-    mvprintw((LINES - 10) / 2 + 3, (COLS - 12) / 2, "Password : ");
+    mvprintw((LINES - 10) / 2 + 3, (COLS - 12) / 2, "Username : ");
+    mvprintw((LINES - 10) / 2 + 5, (COLS - 12) / 2, "Password : ");
     attroff(COLOR_PAIR(4));
     Users *temp = NULL;
     while(1) {
         attron(COLOR_PAIR(4));
-        mvprintw((LINES - 10) / 2 + 1, (COLS - 12) / 2, "Username : ");
-        mvprintw((LINES - 10) / 2 + 3, (COLS - 12) / 2, "Password : ");
-        move((LINES - 10) / 2 + 1, (COLS - 12) / 2 + 11);
+        mvprintw((LINES - 10) / 2 + 3, (COLS - 12) / 2, "Username : ");
+        mvprintw((LINES - 10) / 2 + 5, (COLS - 12) / 2, "Password : ");
+        move((LINES - 10) / 2 + 3, (COLS - 12) / 2 + 11);
         attroff(COLOR_PAIR(4));
         if(temp != NULL) {
             draw_logo(1, "Enter Password for user", 2);
             break;
         }
-        echo();
-        getnstr(username, MAX_LEN);
-        noecho();
+        // getnstr(username, MAX_LEN);
+        int val = getstring(stdscr, username, MAX_LEN, 1);
+        if(val == 27) {
+            clear();
+            refresh();
+            return 27;
+        }
         temp = check_username(arr, n, username);
         if(temp == NULL) {
             clear();
-            draw_logo(1, "User didn't find!", 3);
+            draw_logo(1, username, 3);
+            // draw_logo(1, "User didn't find!", 3);
             refresh();
             continue;
         }
     }
     while (1) {
-        echo();
         attron(COLOR_PAIR(4));
-        mvprintw((LINES - 10) / 2 + 1, (COLS - 12) / 2, "Username : ");
-        mvprintw((LINES - 10) / 2 + 3, (COLS - 12) / 2, "Password : ");
+        mvprintw((LINES - 10) / 2 + 3, (COLS - 12) / 2, "Username : ");
+        mvprintw((LINES - 10) / 2 + 5, (COLS - 12) / 2, "Password : ");
         attroff(COLOR_PAIR(4));
-        mvprintw((LINES - 10) / 2 + 1, (COLS - 12) / 2 + 11, "%s", username);
-        move((LINES - 10) / 2 + 3, (COLS - 12) / 2 + 11);
-        getnstr(password, MAX_LEN);
-        noecho();
+        mvprintw((LINES - 10) / 2 + 3, (COLS - 12) / 2 + 11, "%s", username);
+        move((LINES - 10) / 2 + 5, (COLS - 12) / 2 + 11);
+        // getnstr(password, MAX_LEN);
+        int val = getstring(stdscr, password, MAX_LEN, 0);
+        if(val == 27) {
+            clear();
+            refresh();
+            return 27;
+        }
         clear();
         if(!log_in(arr, n, username, password)) {
             draw_logo(1, "Wrong password", 3);
@@ -257,5 +279,116 @@ int login_menu(Users **arr, int n) {
 }
 
 int pregame_menu() {
+    const char *options[] = {" New Game  ", "Resume Game", "ScoreBoard ", " Settings  ", "  Profile  ", "  Log out  "};
+    int choose = menu("PreGame menu ", 6, options, 6);
+    if(choose == 0) {
 
+    }
+    else if(choose == 1) {
+
+    }
+    else if(choose == 2) {
+        scoreboard();
+    }
+    else if(choose == 3) {
+
+    }
+    else if(choose == 4) {
+        
+    }
+    else if(choose == 5) {
+
+    }
+    else if (choose == -1) {
+
+    }
+}
+void scoreboard() {
+    Users *copy = malloc(MAX_USERS * sizeof(Users));
+    memcpy(copy, arr, users_count);
+    qsort(copy, users_count, sizeof(Users), compare_score);
+    attron(COLOR_PAIR(1) | A_BOLD);
+    int startIndex = 0;
+    wchar_t first = L'🥇';
+    wchar_t second = L'🥈';
+    wchar_t third = L'🥉';
+    wchar_t arrow = L'🡒';
+    while (1) {
+        for(int i = 0; i < 10; i++) {
+            attron(COLOR_PAIR(1) | A_BOLD);
+            mvprintw((LINES - 20) / 2, (COLS - 77) / 3, "Rank  |  Username  |  TotalScore  |  TotalGold  |  TotalGames  |  Experience");
+            attroff(COLOR_PAIR(1) | A_BOLD);
+            if(startIndex + i == 0 || 1) {
+                mvprintw((LINES - 20) / 2 - 2 * i, COLS / 3, "%lc %lc     %s | %d | %d | %d | %ld\n", first , arrow, copy[i].username, copy[i].score, copy[i].gold, copy[i].games_count, copy[i].start_time);
+            }
+        }
+        refresh();
+    }
+}
+
+int getstring(WINDOW* win, char* str, int n, int echo) {
+    int starty, startx;
+    getyx(win, starty, startx);
+    noecho();
+    curs_set(1);
+    char *temp = calloc(n, sizeof(char));
+    int count = 0;
+    int y, x;
+    while(1) {
+        int c = wgetch(win);
+        if(c == '\n') {
+            strncpy(str, temp, count);
+            str[count] = 0;
+            free(temp);
+            return 0;
+        }
+        else if(c == 27) {
+            return 27;
+        }
+        else if(c == KEY_BACKSPACE || c == KEY_DC || c == 127) {
+            if(count == 0) {
+                continue;
+            }
+            getyx(win, y, x);
+            mvaddch(y, x - 1, ' ');
+            move(y, x - 1);
+            count--;
+            continue;
+        }
+        else if(count == n) {
+            continue;
+        }
+        else if(echo == 0) {
+            if(c == KEY_F(1)) {
+                move(starty, startx);
+                for(int i = 0; i < count; i++) {
+                    printw(" ");
+                }
+                strcpy(temp, random_password());
+                count = strlen(temp);
+                mvprintw(starty, startx, "%s", temp);
+            }
+            
+            else
+                printw("%c", '*');
+        }
+        else {
+            printw("%c", c);
+        }
+        temp[count] = c;
+        count++;
+    }
+    curs_set(0);
+}
+
+char *random_password() {
+
+    int len = 10 + rand() % 10;
+    char *res = malloc((len + 1) * sizeof(char));
+    for(int i = 0; i < len; i++) {
+        //32  - 126
+        res[i] = 32 + rand() % (127 - 32);
+    }
+    res[len] = 0;
+    return res;
 }

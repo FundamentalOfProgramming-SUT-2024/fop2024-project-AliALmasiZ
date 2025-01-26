@@ -5,9 +5,12 @@
 #include <string.h>
 #include <regex.h>
 #include <ctype.h>
+#include <time.h>
+
 
 #define MAX_USERS 1000
-#define MAX_LEN 256
+#define MAX_LEN 50
+
 
 typedef struct {
     char username[MAX_LEN];
@@ -15,15 +18,22 @@ typedef struct {
     char email[MAX_LEN];
     int score;
     int gold;
+    int games_count;
+    time_t start_time;
 }Users;
 
-extern int load_users(Users **arr);
-extern void save_users(Users **arr, int users_count);
-extern void sign_up(Users **arr, int *users_count, const char *username, const char *pass, const char *email);
-extern int log_in(Users **arr, int users_count, const char *username, const char *password);
-extern void *check_username(Users **arr, int n, const char *username);
-extern int check_email(char *email);
-extern int pass_check(char *pass);
+int load_users(Users **arr);
+void save_users(Users **arr, int users_count);
+void sign_up(Users **arr, int *users_count, const char *username, const char *pass, const char *email);
+int log_in(Users **arr, int users_count, const char *username, const char *password);
+void *check_username(Users **arr, int n, const char *username);
+int check_email(char *email);
+int pass_check(char *pass);
+int compare_score(const void *a, const void *b);
+
+
 extern Users *active_user;
+extern Users *arr;
+extern int users_count;
 
 #endif
