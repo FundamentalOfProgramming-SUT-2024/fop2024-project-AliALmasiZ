@@ -37,7 +37,7 @@ int main() {
                 choose = menu("Game menu :", 2, options, 4);
                 continue;
             }
-            pregame_menu();
+            val = pregame_menu();
             break;
         }
         else if(choose == 1) { //sign in
@@ -49,7 +49,7 @@ int main() {
             choose = menu(s, 2, options, 4);
         }
         else if(choose == 2) { //guest
-            pregame_menu();
+            int val = pregame_menu();
         }
         else if (choose == -1) {
             endwin();

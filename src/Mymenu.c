@@ -1,5 +1,6 @@
 #include "../include/mymenu.h"
 #include "../include/users.h"
+#include "games.h"
 
 
 void draw_logo(int y, char *message, int color_pair) {
@@ -127,6 +128,10 @@ int sign_up_menu(Users **arr, int *n) {
     char email[MAX_LEN] = {};
     char pass[MAX_LEN] = {};
     curs_set(true);
+    box(stdscr, 0, 0);
+    mvprintw(LINES - 3, 0, "Use arrow keys to navigate and press Enter to select!");
+    mvprintw(LINES - 2, 0, "Press Esc key to go to main menu");
+
     while(true) {
         draw_logo(1 , "Credit: Ali Almasi", 3);
         echo();
@@ -224,6 +229,9 @@ int sign_up_menu(Users **arr, int *n) {
 int login_menu(Users **arr, int n) {
     char username[MAX_LEN], password[MAX_LEN];
     draw_logo(1, "Login User :", 5);
+    box(stdscr, 0, 0);
+    mvprintw(LINES - 3, 0, "Use arrow keys to navigate and press Enter to select!");
+    mvprintw(LINES - 2, 0, "Press Esc key to go to main menu");
     attron(COLOR_PAIR(4));
     mvprintw((LINES - 10) / 2 + 3, (COLS - 30) / 2, "Username : ");
     mvprintw((LINES - 10) / 2 + 5, (COLS - 30) / 2, "Password : ");
@@ -281,10 +289,18 @@ int pregame_menu() {
     const char *options[] = {" New Game  ", "Resume Game", "ScoreBoard ", " Settings  ", "  Profile  ", "  Log out  "};
     int choose = menu("PreGame menu ", 6, options, 6);
     if(choose == 0) {
-
+        int counter = 0;
+        rooms_count[active_floor] = 0;
+        while(rooms_count[active_floor] < 8 || counter < 2) {
+            counter++;
+            generate_room();
+        }
+        print_rooms();
+        refresh();
+        getch();
     }
     else if(choose == 1) {
-
+        
     }
     else if(choose == 2) {
         scoreboard();
@@ -318,7 +334,7 @@ void scoreboard() {
             mvprintw((LINES - 20) / 2, (COLS - 77) / 3, "Rank  |  Username  |  TotalScore  |  TotalGold  |  TotalGames  |  Experience");
             attroff(COLOR_PAIR(1) | A_BOLD);
             if(startIndex + i == 0 || 1) {
-                mvprintw((LINES - 20) / 2 - 2 * i, COLS / 3, "%lc %lc     %s | %d | %d | %d | %ld\n", first , arrow, copy[i].username, copy[i].score, copy[i].gold, copy[i].games_count, copy[i].start_time);
+                mvprintw((LINES - 20) / 2 - (2 * i) - 10, COLS / 3, "%lc %lc     %s | %d | %d | %d | %ld\n", first , arrow, copy[i].username, copy[i].score, copy[i].gold, copy[i].games_count, copy[i].start_time);
             }
         }
         refresh();
