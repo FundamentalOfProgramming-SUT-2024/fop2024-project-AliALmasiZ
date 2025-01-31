@@ -4,6 +4,7 @@ Users *active_user;
 Users *arr;
 int users_count = 0;
 int main() {
+    Users temp_user;
     srand(time(NULL));
     arr = calloc(MAX_USERS, sizeof(Users));
     users_count = load_users(&arr);
@@ -50,6 +51,7 @@ int main() {
             choose = menu(s, 2, options, 4);
         }
         else if(choose == 2) { //guest
+            active_user = &temp_user;
             int val = pregame_menu();
         }
         else if (choose == -1) {

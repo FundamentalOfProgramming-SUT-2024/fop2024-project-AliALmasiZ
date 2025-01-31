@@ -6,25 +6,34 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
+#include <string.h>
 
 #define MAX_ROOMS 10
 #define MAX_FLOORS 4
 #define DISTANCE 2
-#define MAX_PATH 1024
+#define MAX_PATH 10000
+typedef struct Pos {
+    int x;
+    int y;
+}Pos;
 typedef struct Room {
     int x;
     int y;
     int height;
     int width;
-    int doors[3][2];
+    Pos doors[3];
     int door_num;
     int door_wall[3];
+    int visible;
 }Room;
 
-typedef struct Pos {
-    int x;
-    int y;
-}Pos;
+typedef struct Floor
+{
+    Room rooms_arr[MAX_ROOMS];
+    int rooms_count;
+    Pos hallways[MAX_ROOMS][MAX_PATH];
+    int hallway_count[MAX_ROOMS];
+} Floor;
 
 
 extern Room rooms_arr[MAX_FLOORS][MAX_ROOMS];

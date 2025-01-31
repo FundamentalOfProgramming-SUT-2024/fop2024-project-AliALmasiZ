@@ -1,9 +1,9 @@
-#include "games.h"
-#define DEBUG
+#include "../include/games.h"
+#include "../include/users.h"
 Room rooms_arr[MAX_FLOORS][MAX_ROOMS] = {0};
 int rooms_count[MAX_FLOORS] = {0};
 int active_floor = 0;
-
+Floor *floors_arr;
 Pos visited[MAX_PATH] = {};
 int visited_count = 0;
 
@@ -26,23 +26,23 @@ void generate_room() {
             rooms_arr[active_floor][rooms_count[active_floor]].door_wall[i] = rand() % 4;
             switch (rooms_arr[active_floor][rooms_count[active_floor]].door_wall[i]) {
             case 0:
-                rooms_arr[active_floor][rooms_count[active_floor]].doors[i][0] = rand() % (width - 1) + 1;
-                rooms_arr[active_floor][rooms_count[active_floor]].doors[i][1] = 0;
+                rooms_arr[active_floor][rooms_count[active_floor]].doors[i].x = rand() % (width - 1) + 1;
+                rooms_arr[active_floor][rooms_count[active_floor]].doors[i].y = 0;
                 break;
             
             case 1:
-                rooms_arr[active_floor][rooms_count[active_floor]].doors[i][0] = width;
-                rooms_arr[active_floor][rooms_count[active_floor]].doors[i][1] = rand() % (height - 1) + 1;
+                rooms_arr[active_floor][rooms_count[active_floor]].doors[i].x = width;
+                rooms_arr[active_floor][rooms_count[active_floor]].doors[i].y = rand() % (height - 1) + 1;
                 break;
 
             case 2:
-                rooms_arr[active_floor][rooms_count[active_floor]].doors[i][0] = rand() % (width - 1) + 1;
-                rooms_arr[active_floor][rooms_count[active_floor]].doors[i][1] = height;
+                rooms_arr[active_floor][rooms_count[active_floor]].doors[i].x = rand() % (width - 1) + 1;
+                rooms_arr[active_floor][rooms_count[active_floor]].doors[i].y = height;
                 break;
 
             case 3: 
-                rooms_arr[active_floor][rooms_count[active_floor]].doors[i][0] = 0;
-                rooms_arr[active_floor][rooms_count[active_floor]].doors[i][1] = rand() % (height - 1) + 1;
+                rooms_arr[active_floor][rooms_count[active_floor]].doors[i].x = 0;
+                rooms_arr[active_floor][rooms_count[active_floor]].doors[i].y = rand() % (height - 1) + 1;
                 break;
 
             default:
@@ -122,7 +122,10 @@ void print_rooms() {
         mvaddch(temp.y + temp.height, temp.x, ACS_LLCORNER);
         mvaddch(temp.y + temp.height, temp.x + temp.width, ACS_LRCORNER);
         for(int j = 0; j < temp.door_num; j++) {
-            mvaddch(temp.y + temp.doors[j][1], temp.x + temp.doors[j][0], '+');
+            // attron(COLOR_PAIR(j + 1));
+            mvaddch(temp.y + temp.doors[j].y, temp.x + temp.doors[j].x, '+');
+            // attroff(COLOR_PAIR(j + 1));
+
         }
     }
     mvprintw(0, 0, " ");
@@ -147,121 +150,7 @@ int is_visited(int x, int y) {
     }
     return 0;
 }
-/*void draw_hallway1(int start_x, int start_y, int end_x, int end_y) {
-    int x, y;
-    if(end_y < start_y) {
-        int temp = end_y;
-        end_y = start_y;
-        start_y = temp;
-    }
-    x = start_x;
-    y = start_y;
-    int left, right, up, down;
-    while (1){    
-        left = is_overlap(x - 1, y) + is_visited(visited, visited_count, x - 1, y);
-        right = is_overlap(x + 1, y) + is_visited(visited, visited_count, x + 1, y);
-        up = is_overlap(x, y - 1) + is_visited(visited, visited_count, x, y - 1);
-        down = is_overlap(x, y + 1) + is_visited(visited, visited_count, x, y + 1);
-        if(left == 2 || right == 2 || up == 2 || down == 2) {
-            if(x - end_x <= 1 && end_x - x <= 1 && y - end_y <= 1 && end_y - y <= 1)
-                break;
-        }
-        if(x > end_x) {
-            if(!left) {
-                x--;
-            }
-            else if(y > end_y) {
-                if(!up) 
-                    y--;
-                else if (!down) 
-                    y++;
-                else if(!right)
-                    x++;
-                else
-                    exit(100);
-            }
-            else if(y <= end_y) {
-                if(!down) 
-                    y++;
-                else if(!right)
-                    x++;
-                else if (!up) 
-                    y--;
-                else
-                    exit(100);
-            }
-            else    
-                exit(100);
-        }
-        else if(x < end_x) {
-            if(!right) {
-                x++;
-            }
-            else if(y > end_y) {
-                if(!up) 
-                    y--;
-                else if (!down) 
-                    y++;
-                else if(!left)
-                    x--;
-                else
-                    exit(100);
-            }
-            else if(y <= end_y) {
-                if(!down) 
-                    y++;
-                else if(!left)
-                    x--;
-                else if (!up) 
-                    y--;
-                else
-                    exit(100);
-            }
-            else    
-                exit(100);
-        }
-        else if (x == end_x) 
-        {
-            if(y == end_y)
-                break;
-            else if(y > end_y) {
-                if(!up) 
-                    y--;
-                else if(!left)
-                    x--;
-                else if(!right)
-                    x++;
-                else if (!down) 
-                    y++;
-                else
-                    exit(100);
-            }
-            else if(y < end_y) {
-                if(!down) 
-                    y++;
-                else if(!left)
-                    x--;
-                else if(!right)
-                    x++;
-                else if (!up) 
-                    y--;
-                else
-                    exit(100);
-            }
-            else    
-                exit(100);
-        }else 
-            exit(100);
-        // printf("(%d, %d), (%d, %d)\n", y, x, LINES, COLS);
-        mvprintw(y, x, "#");
-        visited[visited_count].x = x;
-        visited[visited_count].y = y;
-        visited_count++;
-        refresh();
-        usleep(100000);
-    }
 
-}*/
 int make_hallway(int start_x, int start_y, int end_x, int end_y) {
     if(start_y < end_y) {
         int temp = start_y;
@@ -278,6 +167,12 @@ int make_hallway(int start_x, int start_y, int end_x, int end_y) {
     int flag;
     while(1) {    
         visited[visited_count++] = current;
+        if (visited_count >= MAX_PATH - 1) {
+            refresh();
+            getch();
+            printf("Error: Exceeded MAX_PATH in make_hallway()!\n");
+            return 0;
+        }
         if((abs(end_x - current.x) <= 1 && end_y == current.y) || (abs(end_y - current.y) <= 1 && end_x == current.x))
             return 1;
         if(current.x == end_x && current.y == end_y)
@@ -302,19 +197,6 @@ int make_hallway(int start_x, int start_y, int end_x, int end_y) {
             // getch();
             continue;
         }
-        /*Pos moves[4];
-        if (dy != 0) {
-            moves[0] = (Pos){current.x + 1, current.y};
-            moves[1] = (Pos){current.x - 1, current.y};
-            moves[2] = (Pos){current.x, current.y + 1};
-            moves[3] = (Pos){current.x, current.y - 1};
-        }
-        else if (dx != 0) {
-            moves[0] = (Pos){current.x, current.y + 1};
-            moves[1] = (Pos){current.x, current.y - 1};
-            moves[2] = (Pos){current.x - 1, current.y};
-            moves[3] = (Pos){current.x + 1, current.y};
-        }*/
         Pos moves[4];
         if(dy == 0) {
             moves[0] = (Pos){current.x, current.y - 1};
@@ -332,11 +214,15 @@ int make_hallway(int start_x, int start_y, int end_x, int end_y) {
             if(flag == 1) {
                 moves[0] = (Pos){current.x, current.y + 1};
                 moves[1] = (Pos){current.x, current.y - 1};
+                moves[2] = (Pos){current.x - 1, current.y};
+                moves[3] = (Pos){current.x + 1, current.y};
                 flag = 1;
             }
             else {
                 moves[0] = (Pos){current.x + 1, current.y};
                 moves[1] = (Pos){current.x - 1, current.y};
+                moves[2] = (Pos){current.x, current.y - 1};
+                moves[3] = (Pos){current.x, current.y + 1};
                 flag = 0;   
             }
         }
@@ -377,21 +263,40 @@ void draw_hallway() {
     }
 }
 void connect_doors() {
+    int fuck = 0;
 
     qsort(rooms_arr[active_floor], rooms_count[active_floor], sizeof(Room), compare_distance);
     for (int i = 0; i < rooms_count[active_floor] - 1; i++) {
         Room room1 = rooms_arr[active_floor][i];
         Room room2 = rooms_arr[active_floor][i + 1];
-        int door1_x = room1.x + room1.doors[0][0];
-        int door1_y = room1.y + room1.doors[0][1];
-        int door2_x = room2.x + room2.doors[0][0];
-        int door2_y = room2.y + room2.doors[0][1];
-        visited_count = 0;
-        make_hallway(door1_x, door1_y, door2_x, door2_y);
-        // draw_hallway();
+        for (int j = 0; j < room1.door_num && j < room2.door_num; j++){
+            if((room1.door_wall[j] == -1 || room2.door_wall[j] == -1) && j != 0)
+                continue;
+            if(room1.x == 0 || room2.x == 0)
+                continue;
+            if(j >= room1.door_num || j >= room2.door_num)
+                continue;
+            int door1_x = room1.x + room1.doors[j].x;
+            int door1_y = room1.y + room1.doors[j].y;
+            int door2_x = room2.x + room2.doors[j].x;
+            int door2_y = room2.y + room2.doors[j].y;
+            if(door1_x == 0 || door2_x == 0 || door1_x == 1 || door2_x == 1)
+                continue;
+            room1.door_wall[j] = -1;
+            room2.door_wall[j] = -1;
+            visited_count = 0;
+            if(floors_arr == NULL)
+                printf("floors_arr unallocated!\n");
+            // attron(COLOR_PAIR((fuck) % 2 + 1));
+            make_hallway(door1_x, door1_y, door2_x, door2_y);
+            memcpy(floors_arr[active_floor].hallways[i], visited, visited_count * sizeof(Pos));
+            // attroff(COLOR_PAIR((fuck++) % 2 + 1));
+        }
+        
     }
 }
 void generate_floor() {
+    floors_arr = active_user->floors_arr;
     int counter = 0;
     rooms_count[active_floor] = 0;
     while(rooms_count[active_floor] < 6 || counter < 20) {

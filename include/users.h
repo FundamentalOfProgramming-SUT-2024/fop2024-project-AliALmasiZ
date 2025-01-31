@@ -1,12 +1,12 @@
-#ifndef USERS_H
-#define USERS_H
+#ifndef _USERS_H
+#define _USERS_H
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <regex.h>
 #include <ctype.h>
 #include <time.h>
-
+#include "games.h"
 
 #define MAX_USERS 1000
 #define MAX_LEN 50
@@ -19,6 +19,9 @@ typedef struct {
     int score;
     int gold;
     int games_count;
+    Floor floors_arr[MAX_FLOORS];
+    int active_floor;
+    Pos position;
     time_t start_time;
 }Users;
 

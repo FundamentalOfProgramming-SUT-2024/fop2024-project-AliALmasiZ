@@ -1,6 +1,6 @@
-#include "mymenu.h"
-#include "users.h"
-#include "games.h"
+#include "../include/mymenu.h"
+#include "../include/users.h"
+#include "../include/games.h"
 
 
 void draw_logo(int y, char *message, int color_pair) {
@@ -289,7 +289,7 @@ int pregame_menu() {
     const char *options[] = {" New Game  ", "Resume Game", "ScoreBoard ", " Settings  ", "  Profile  ", "  Log out  "};
     int choose = menu("PreGame menu ", 6, options, 6);
     if(choose == 0) {
-        
+        generate_floor();
     }
     else if(choose == 1) {
         
@@ -319,14 +319,14 @@ void scoreboard() {
     wchar_t first = L'🥇';
     wchar_t second = L'🥈';
     wchar_t third = L'🥉';
-    wchar_t arrow = L'🡒';
+    // wchar_t arrow = L'🡒';
     while (1) {
         for(int i = 0; i < 10; i++) {
             attron(COLOR_PAIR(1) | A_BOLD);
             mvprintw((LINES - 20) / 2, (COLS - 77) / 3, "Rank  |  Username  |  TotalScore  |  TotalGold  |  TotalGames  |  Experience");
             attroff(COLOR_PAIR(1) | A_BOLD);
             if(startIndex + i == 0 || 1) {
-                mvprintw((LINES - 20) / 2 - (2 * i) - 10, COLS / 3, "%lc %lc     %s | %d | %d | %d | %ld\n", first , arrow, copy[i].username, copy[i].score, copy[i].gold, copy[i].games_count, copy[i].start_time);
+                mvprintw((LINES - 20) / 2 - (2 * i) - 10, COLS / 3, "%lc     %s | %d | %d | %d | %ld\n", first , copy[i].username, copy[i].score, copy[i].gold, copy[i].games_count, copy[i].start_time);
             }
         }
         refresh();
