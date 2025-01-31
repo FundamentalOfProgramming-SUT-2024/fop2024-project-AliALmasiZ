@@ -1,5 +1,5 @@
-#include "../include/mymenu.h"
-#include "../include/users.h"
+#include "mymenu.h"
+#include "users.h"
 #include "games.h"
 
 
@@ -289,15 +289,7 @@ int pregame_menu() {
     const char *options[] = {" New Game  ", "Resume Game", "ScoreBoard ", " Settings  ", "  Profile  ", "  Log out  "};
     int choose = menu("PreGame menu ", 6, options, 6);
     if(choose == 0) {
-        int counter = 0;
-        rooms_count[active_floor] = 0;
-        while(rooms_count[active_floor] < 8 || counter < 2) {
-            counter++;
-            generate_room();
-        }
-        print_rooms();
-        refresh();
-        getch();
+        
     }
     else if(choose == 1) {
         
@@ -396,7 +388,6 @@ int getstring(WINDOW* win, char* str, int n, int echo) {
     }
     curs_set(0);
 }
-
 char *random_password() {
 
     int len = 15 + rand() % 10;

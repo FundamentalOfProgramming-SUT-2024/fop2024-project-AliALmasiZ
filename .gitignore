@@ -23,6 +23,7 @@ CMakeCache.txt
 CMakeFiles/
 CMakeScripts/
 Testing/
+makefile
 
 #build and test
 build/

@@ -1,5 +1,5 @@
-#include "../include/mymenu.h"
-#include "../include/users.h"
+#include "mymenu.h"
+#include "users.h"
 Users *active_user;
 Users *arr;
 int users_count = 0;
@@ -22,6 +22,7 @@ int main() {
     init_pair(4, COLOR_MAGENTA, COLOR_BLACK);
     init_pair(5, COLOR_CYAN, COLOR_BLACK);
     init_pair(6, COLOR_BLUE, COLOR_BLACK);
+    init_pair(7, COLOR_YELLOW, COLOR_BLACK);
     //----------------------------------------------
     const char *options[] = {"    Log in    ", "   Sign up    ", "Play as Guest ", "  Exit Game   "};
     int choose = menu("Credit: Ali Almasi", 3, options, 4);
@@ -64,7 +65,7 @@ int main() {
             refresh();
             endwin();
             printf("Somthing went wrong");
-            return choose;
+            // return choose;
 
         }
     }
