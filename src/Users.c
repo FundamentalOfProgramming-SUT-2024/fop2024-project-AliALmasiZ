@@ -1,14 +1,15 @@
-#include "users.h"
+#include "../include/users.h"
 
 
 int compare_name(const void *a, const void *b) {
     return strcmp((*(Users *)a).username, (*(Users *)b).username);
 }
 int compare_score(const void *a, const void *b) {
-    return (*(Users*)a).score - (*(Users*)b).score;
+    return -(*(Users*)a).score + (*(Users*)b).score;
 }
 int load_users(Users **arr) {
     FILE *usersfile = fopen("users.bin", "rb");
+    fseek(usersfile, 0, SEEK_SET);
     if(usersfile == NULL) {
         return 0;
     }
@@ -22,6 +23,7 @@ int load_users(Users **arr) {
 void save_users(Users **arr, int users_count) {
     qsort(*arr, users_count, sizeof(Users), compare_name);
     FILE *usersfile = fopen("users.bin", "wb");
+    fseek(usersfile, 0, SEEK_SET);
     for(int i = 0; i < users_count; i++) {
         fwrite(*arr + i, sizeof(Users), 1, usersfile);
     }
@@ -48,6 +50,7 @@ int log_in(Users **arr, int users_count, const char *username, const char *passw
 }
 
 void *check_username(Users **arr, int n, const char *username) {
+    qsort(*arr, users_count, sizeof(Users), compare_name);
     Users temp;
     strcpy(temp.username, username);
     return bsearch(&temp, *arr, n, sizeof(Users), compare_name);

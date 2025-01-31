@@ -311,26 +311,62 @@ int pregame_menu() {
     }
 }
 void scoreboard() {
-    Users *copy = malloc(MAX_USERS * sizeof(Users));
-    memcpy(copy, arr, users_count);
-    qsort(copy, users_count, sizeof(Users), compare_score);
+    // mvprintw(3,3, "%s", copy[MAX_USERS].username);
+    Users temp = *active_user;
+    qsort(arr, users_count, sizeof(Users), compare_score);
     attron(COLOR_PAIR(1) | A_BOLD);
     int startIndex = 0;
+    // mvprintw(1, 1, "%s", arr[0].username);
     wchar_t first = L'🥇';
     wchar_t second = L'🥈';
     wchar_t third = L'🥉';
-    // wchar_t arrow = L'🡒';
+    wchar_t arrow = L'🡒';
+    time_t current_time = time(0);
+    const int max_lines = 3;
     while (1) {
-        for(int i = 0; i < 10; i++) {
-            attron(COLOR_PAIR(1) | A_BOLD);
-            mvprintw((LINES - 20) / 2, (COLS - 77) / 3, "Rank  |  Username  |  TotalScore  |  TotalGold  |  TotalGames  |  Experience");
-            attroff(COLOR_PAIR(1) | A_BOLD);
-            if(startIndex + i == 0 || 1) {
-                mvprintw((LINES - 20) / 2 - (2 * i) - 10, COLS / 3, "%lc     %s | %d | %d | %d | %ld\n", first , copy[i].username, copy[i].score, copy[i].gold, copy[i].games_count, copy[i].start_time);
+        clear();
+        for(int i = 0; i < MIN(users_count, max_lines); i++) {
+            int index = i + startIndex;
+            if(!strcmp(temp.username, arr[index].username))            
+                attron(COLOR_PAIR(3) | A_BOLD | A_ITALIC | A_BLINK);
+            // mvprintw((LINES - 20) / 2, (COLS - 77) / 3, "Rank  |                |    |    |    |  ");
+            if(index == 0) {
+                attron(COLOR_PAIR(12) | A_BOLD);
+                mvprintw((LINES - 20) / 2 + (2 * i), (COLS - 77) / 3, "%lc     GOAT :  %s | TotalScore : %d | TotalGold : %d | TotalGames : %d | Experience %ld\n", first , arr[index].username, arr[index].score, arr[index].gold, arr[index].games_count, (current_time - arr[index].start_time));
+                attroff(COLOR_PAIR(12) | A_BOLD);
+            } 
+            else if(index == 1) {
+                attron(COLOR_PAIR(10) | A_BOLD);
+                mvprintw((LINES - 20) / 2 + (2 * i), (COLS - 77) / 3, "%lc     Shadow :  %s | TotalScore : %d | TotalGold : %d | TotalGames : %d | Experience %ld\n", second , arr[index].username, arr[index].score, arr[index].gold, arr[index].games_count, (current_time - arr[index].start_time));
+                attroff(COLOR_PAIR(10) | A_BOLD);
+            }
+            else if(index == 2) {
+                attron(COLOR_PAIR(11) | A_BOLD);
+                mvprintw((LINES - 20) / 2 + (2 * i), (COLS - 77) / 3, "%lc     The Fighter :  %s | TotalScore : %d | TotalGold : %d | TotalGames : %d | Experience %ld\n", third , arr[index].username, arr[index].score, arr[index].gold, arr[index].games_count, (current_time - arr[index].start_time));
+                attroff(COLOR_PAIR(11) | A_BOLD);
+            }
+            else {
+            
+                mvprintw((LINES - 20) / 2 + (2 * i), (COLS - 77) / 3, "%d     Username :  %s | TotalScore : %d | TotalGold : %d | TotalGames : %d | Experience %ld\n", index + 1 , arr[index].username, arr[index].score, arr[index].gold, arr[index].games_count, (current_time - arr[index].start_time));
+            
+            }
+            if(!strcmp(temp.username, arr[index].username))
+                attroff(COLOR_PAIR(3) | A_BOLD | A_ITALIC | A_BLINK);
+        }
+        int ch = getch();
+        if(ch == KEY_DOWN) {
+            if(max_lines + startIndex < users_count)
+                startIndex++;
+        }
+        else if(ch == KEY_UP) {
+            if(startIndex > 0) {
+                startIndex--;
             }
         }
         refresh();
     }
+    qsort(arr, users_count, sizeof(Users), compare_name);
+
 }
 
 int getstring(WINDOW* win, char* str, int n, int echo) {

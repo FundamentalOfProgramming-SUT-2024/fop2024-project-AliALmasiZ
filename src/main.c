@@ -16,7 +16,15 @@ int main() {
     keypad(stdscr, true);
     noecho();
     curs_set(FALSE);
-    //-----------color pairs------------------------                    
+    //-----------color pairs------------------------   
+
+    init_color(10, 700, 700, 700); //silver
+    init_color(11, 800, 500, 200); //bronze
+    init_color(12, 1000, 843, 0); //gold
+    init_pair(10, 10, COLOR_BLACK);
+    init_pair(11, 11, COLOR_BLACK);
+    init_pair(12, 12, COLOR_BLACK);
+
     init_pair(1, COLOR_WHITE, COLOR_BLACK);
     init_pair(2, COLOR_GREEN, COLOR_BLACK);
     init_pair(3, COLOR_RED, COLOR_BLACK);

@@ -7,6 +7,7 @@
 #include <locale.h>
 #include <wchar.h>
 
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
 int menu(char* message, int color, const char **options, int size);
 void goodbye_logo();

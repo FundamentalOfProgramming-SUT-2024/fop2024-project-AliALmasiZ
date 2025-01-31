@@ -33,6 +33,7 @@ void *check_username(Users **arr, int n, const char *username);
 int check_email(char *email);
 int pass_check(char *pass);
 int compare_score(const void *a, const void *b);
+int compare_name(const void *a, const void *b);
 
 
 extern Users *active_user;
