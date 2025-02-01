@@ -9,6 +9,8 @@ int compare_score(const void *a, const void *b) {
 }
 int load_users(Users **arr) {
     FILE *usersfile = fopen("users.bin", "rb");
+    if(usersfile == NULL)
+        return 0;
     fseek(usersfile, 0, SEEK_SET);
     if(usersfile == NULL) {
         return 0;
@@ -36,6 +38,7 @@ void sign_up(Users **arr, int *users_count, const char *username, const char *pa
     (*users_count)++;
     save_users(arr, *users_count);
     (*arr + *users_count)->start_time = time(NULL);
+    (*arr + *users_count)->player_color = 1;
     
 }
 int log_in(Users **arr, int users_count, const char *username, const char *password) {

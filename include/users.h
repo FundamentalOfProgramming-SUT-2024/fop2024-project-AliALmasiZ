@@ -13,6 +13,7 @@
 
 
 typedef struct {
+    int player_color;
     char username[MAX_LEN];
     char password[MAX_LEN];
     char email[MAX_LEN];
@@ -22,6 +23,8 @@ typedef struct {
     Floor floors_arr[MAX_FLOORS];
     int active_floor;
     Pos position;
+    int under_ch;
+    int difficulty;
     time_t start_time;
 }Users;
 

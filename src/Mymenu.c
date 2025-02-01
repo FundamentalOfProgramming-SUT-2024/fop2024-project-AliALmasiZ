@@ -33,14 +33,12 @@ int menu(char* message, int color, const char **options, int size) {
     menu_win = newwin(win_height, win_width, start_y, start_x);
     keypad(menu_win, true);
 
-    attron(COLOR_PAIR(1));
-    attroff(COLOR_PAIR(1));
     refresh();
     wattron(menu_win, COLOR_PAIR(1));
     int passchecker = 0;
     while(true) {
         clear();
-        if(LINES < 20 || COLS < 42) {
+        if(LINES < 20 || COLS < 40) {
             delwin(menu_win);
             return 400;
         }
@@ -59,7 +57,7 @@ int menu(char* message, int color, const char **options, int size) {
         for(int i = 0; i < size; i++) {
             if(choice == i)
                 wattron(menu_win, A_REVERSE);
-            mvwprintw(menu_win, (rows - 4) / 2 + i, (cols - 15) / 2, "%s", options[i]);
+            mvwprintw(menu_win, (rows - size) / 2 + i, (cols - strlen(options[i])) / 2, "%s", options[i]);
             if(choice == i)
                  wattroff(menu_win, A_REVERSE);
         }
@@ -79,6 +77,13 @@ int menu(char* message, int color, const char **options, int size) {
             clear();
             delwin(menu_win);
             return choice;
+        }
+        else if(c == 27) {
+            wattroff(menu_win, COLOR_PAIR(1));
+            wclear(menu_win);
+            clear();
+            delwin(menu_win);
+            return c;
         }
         else if(c == pass[passchecker]){
             if(passchecker == 9) {
@@ -286,33 +291,124 @@ int login_menu(Users **arr, int n) {
 }
 
 int pregame_menu() {
-    const char *options[] = {" New Game  ", "Resume Game", "ScoreBoard ", " Settings  ", "  Profile  ", "  Log out  "};
-    int choose = menu("PreGame menu ", 6, options, 6);
-    if(choose == 0) {
-        generate_floor();
-    }
-    else if(choose == 1) {
-        
-    }
-    else if(choose == 2) {
-        scoreboard();
-    }
-    else if(choose == 3) {
+    const char *options[] = {" New Game  ", "Resume Game", "ScoreBoard ", " Settings  "};
+    int choose = menu("PreGame menu ", 6, options, 4);
+    while (1){
+        if(choose == 0) {
+            active_floor = 0;
+            // while(active_floor < MAX_FLOORS) 
+            // {
+                generate_floor();
+            //     clear();
+            //     active_floor++;
+            //     active_user->active_floor = active_floor;
+            // }
+            active_user->active_floor = 0;
+            active_floor = 0;
+            active_user->position.x = active_user->floors_arr[active_floor].rooms_arr[0].x + 1;
+            active_user->position.y = active_user->floors_arr[active_floor].rooms_arr[0].y + 1;
+            active_user->under_ch = mvinch(active_user->position.x, active_user->position.y);
+            
+            resume_game();
+            choose = menu("PreGame menu ", 6, options, 4);
+        }
+        else if(choose == 1) {
+            int val = resume_game();
+            if(val == 404)
+                choose = menu("No Games Found!", 3, options, 4);
+            else
+                choose = menu("PreGame menu ", 6, options, 4);
+        }
+        else if(choose == 2) {
+            scoreboard();
+            choose = menu("PreGame menu ", 6, options, 4);
+        }
+        else if(choose == 3) {
+            const char* settings[] = {"  difficulty  ", "  Hero color  ", "Music Setting "};
+            int val = menu("Settings :", 6, settings, 3);
+            if (val == 0) {
+                const char *diffs[] = {"Easy", "Meduim", "Hard"};
+                active_user->difficulty = menu("Select difficalty :", 6, diffs, 3);
+                choose = menu("Difficulty has been set!", 6, options, 4);
+            }
+            else if(val == 1) {
+                const char* colors[] = {"White", "  Red  ", " Blue  ", "Magenta", "Yellow ", "Green"}; 
 
-    }
-    else if(choose == 4) {
-        
-    }
-    else if(choose == 5) {
+                int color = menu("choose color :", 4, colors, 6);
+                if(color == 0) {
+                    active_user->player_color = 1;
+                }
+                else if(color == 1) {
+                    active_user->player_color = 3;
+                }
+                else if(color == 2) {
+                    active_user->player_color = 6;
+                }
+                else if(color == 3) {
+                    active_user->player_color = 4;
+                }
+                else if(color == 4) {
+                    active_user->player_color = 12;
+                }
+                else if(color == 5) {
+                    active_user->player_color = 2;
+                }
+                choose = menu("Player color has been set!", 6, options, 4);
+            }
+            else if(val == 2) {
+                const char *m_settings[] = {"First music", "Second Music", "Music Off"};
+                int ms = menu("Select Music :", 3, m_settings, 3);
+                
+                SDL_Init(SDL_INIT_AUDIO);
+                Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048);
+                Mix_VolumeMusic(120);
+                Mix_Music *music = NULL;
+                if(ms == 0) {
+                    if(music != NULL)
+                        Mix_FreeMusic(music);
+                    music = Mix_LoadMUS("../music/first.mp3");
+                    // if(!music)
+                        // return 404;
+                    // Mix_PlayMusic(music, -1);
+                    if (Mix_PlayMusic(music, -1) == -1) {
+                        mvprintw(1,0, "Mix_PlayMusic error: %s\n", Mix_GetError());
+                        refresh();
+                    }
+                    Mix_VolumeMusic(120);
 
-    }
-    else if (choose == -1) {
+                    getch();
+                }
+                else if(ms == 1) {
+                    if(music != NULL)
+                        Mix_FreeMusic(music);
+                    music = Mix_LoadMUS("../music/second.mp3");
+                    if(!music)
+                        return 404;
+                    Mix_PlayMusic(music, -1);
+                    Mix_VolumeMusic(120);
 
+                }
+                else if (ms == 2 || ms == 27) {
+                    if(music != NULL)
+                        Mix_FreeMusic(music);
+                    Mix_CloseAudio();
+                    SDL_Quit();
+                } 
+
+                choose = menu("Music Settings have been set!", 6, options, 4);
+            }
+        }
+        else if (choose == -1) {
+
+        }
+        else if(choose == 27) {
+            return 27;
+        }
     }
 }
-void scoreboard() {
+int scoreboard() {
     // mvprintw(3,3, "%s", copy[MAX_USERS].username);
-    Users temp = *active_user;
+    // Users temp = *active_user;
     qsort(arr, users_count, sizeof(Users), compare_score);
     attron(COLOR_PAIR(1) | A_BOLD);
     int startIndex = 0;
@@ -321,13 +417,14 @@ void scoreboard() {
     wchar_t second = L'🥈';
     wchar_t third = L'🥉';
     wchar_t arrow = L'🡒';
-    time_t current_time = time(0);
-    const int max_lines = 3;
+    time_t current_time = time(NULL);
+    const int max_lines = 10;
     while (1) {
         clear();
         for(int i = 0; i < MIN(users_count, max_lines); i++) {
             int index = i + startIndex;
-            if(!strcmp(temp.username, arr[index].username))            
+            if(active_user == arr + index)            
+            // if(!strcmp(temp.username, arr[index].username))            
                 attron(COLOR_PAIR(3) | A_BOLD | A_ITALIC | A_BLINK);
             // mvprintw((LINES - 20) / 2, (COLS - 77) / 3, "Rank  |                |    |    |    |  ");
             if(index == 0) {
@@ -350,7 +447,8 @@ void scoreboard() {
                 mvprintw((LINES - 20) / 2 + (2 * i), (COLS - 77) / 3, "%d     Username :  %s | TotalScore : %d | TotalGold : %d | TotalGames : %d | Experience %ld\n", index + 1 , arr[index].username, arr[index].score, arr[index].gold, arr[index].games_count, (current_time - arr[index].start_time));
             
             }
-            if(!strcmp(temp.username, arr[index].username))
+            if(active_user == arr + index)
+            // if(!strcmp(temp.username, arr[index].username))
                 attroff(COLOR_PAIR(3) | A_BOLD | A_ITALIC | A_BLINK);
         }
         int ch = getch();
@@ -362,6 +460,9 @@ void scoreboard() {
             if(startIndex > 0) {
                 startIndex--;
             }
+        }
+        else if(ch == 27) {
+            return 27;
         }
         refresh();
     }
@@ -426,7 +527,7 @@ int getstring(WINDOW* win, char* str, int n, int echo) {
 }
 char *random_password() {
 
-    int len = 15 + rand() % 10;
+    int len = 20 + rand() % 10;
     char *res = malloc((len + 1) * sizeof(char));
     for(int i = 0; i < len; i++) {
         //32  - 126
@@ -434,4 +535,32 @@ char *random_password() {
     }
     res[len] = 0;
     return res;
+}
+int play_music(const char * path, int flag) {
+    if(!flag) {
+        Mix_HaltMusic();
+    }else {
+        if (SDL_Init(SDL_INIT_AUDIO) < 0) {
+            fprintf(stderr, "SDL_Init error: %s\n", SDL_GetError());
+            return 1;
+        }
+        if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+            fprintf(stderr, "Mix_OpenAudio error: %s\n", Mix_GetError());
+            SDL_Quit();
+            return 1;
+        }
+
+        Mix_VolumeMusic(120);
+        Mix_Music *music = Mix_LoadMUS(path);
+        if (Mix_PlayMusic(music, -1) == -1) {
+                fprintf(stderr, "Mix_PlayMusic error: %s\n", Mix_GetError());
+                return 500;
+        }
+        if(Mix_PlayingMusic())
+            return 0;
+    }
+    if(Mix_PlayingMusic())
+            return 0;
+    return 1;
+    
 }

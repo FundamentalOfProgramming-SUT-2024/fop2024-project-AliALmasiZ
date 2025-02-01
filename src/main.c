@@ -1,5 +1,5 @@
-#include "mymenu.h"
-#include "users.h"
+#include "../include/mymenu.h"
+#include "../include/users.h"
 Users *active_user;
 Users *arr;
 int users_count = 0;
@@ -48,7 +48,10 @@ int main() {
                 continue;
             }
             val = pregame_menu();
-            break;
+            if(val == 27) {
+                active_user = NULL;
+                choose = menu("Game menu :", 2, options, 4);
+            }
         }
         else if(choose == 1) { //sign in
             char *s = "User registered successfully";
@@ -61,6 +64,13 @@ int main() {
         else if(choose == 2) { //guest
             active_user = &temp_user;
             int val = pregame_menu();
+            if(val == 27) {
+                active_user = NULL;
+                choose = menu("Game menu :", 2, options, 4);
+            }
+        }
+        else if(choose == 27) {
+            break;
         }
         else if (choose == -1) {
             endwin();
@@ -74,8 +84,8 @@ int main() {
             clear();
             refresh();
             endwin();
-            printf("Somthing went wrong");
-            // return choose;
+            printf("Somthing went wrong! Error : %d", choose);
+            return choose;
 
         }
     }
