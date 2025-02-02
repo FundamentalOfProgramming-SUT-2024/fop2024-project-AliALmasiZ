@@ -296,13 +296,13 @@ int pregame_menu() {
     while (1){
         if(choose == 0) {
             active_floor = 0;
-            // while(active_floor < MAX_FLOORS) 
-            // {
+            while(active_floor < MAX_FLOORS) 
+            {
                 generate_floor();
-            //     clear();
-            //     active_floor++;
-            //     active_user->active_floor = active_floor;
-            // }
+                clear();
+                active_floor++;
+                active_user->active_floor = active_floor;
+            }
             active_user->active_floor = 0;
             active_floor = 0;
             active_user->position.x = active_user->floors_arr[active_floor].rooms_arr[0].x + 1;
@@ -408,7 +408,7 @@ int pregame_menu() {
 }
 int scoreboard() {
     // mvprintw(3,3, "%s", copy[MAX_USERS].username);
-    // Users temp = *active_user;
+    Users temp = *active_user;
     qsort(arr, users_count, sizeof(Users), compare_score);
     attron(COLOR_PAIR(1) | A_BOLD);
     int startIndex = 0;
@@ -423,8 +423,8 @@ int scoreboard() {
         clear();
         for(int i = 0; i < MIN(users_count, max_lines); i++) {
             int index = i + startIndex;
-            if(active_user == arr + index)            
-            // if(!strcmp(temp.username, arr[index].username))            
+            // if(active_user == arr + index)            
+            if(!strcmp(temp.username, arr[index].username))            
                 attron(COLOR_PAIR(3) | A_BOLD | A_ITALIC | A_BLINK);
             // mvprintw((LINES - 20) / 2, (COLS - 77) / 3, "Rank  |                |    |    |    |  ");
             if(index == 0) {
@@ -447,8 +447,8 @@ int scoreboard() {
                 mvprintw((LINES - 20) / 2 + (2 * i), (COLS - 77) / 3, "%d     Username :  %s | TotalScore : %d | TotalGold : %d | TotalGames : %d | Experience %ld\n", index + 1 , arr[index].username, arr[index].score, arr[index].gold, arr[index].games_count, (current_time - arr[index].start_time));
             
             }
-            if(active_user == arr + index)
-            // if(!strcmp(temp.username, arr[index].username))
+            // if(active_user == arr + index)
+            if(!strcmp(temp.username, arr[index].username))
                 attroff(COLOR_PAIR(3) | A_BOLD | A_ITALIC | A_BLINK);
         }
         int ch = getch();

@@ -11,8 +11,11 @@
 
 #define MAX_ROOMS 20
 #define MAX_FLOORS 4
-#define DISTANCE 2
+#define DISTANCE 3
 #define MAX_PATH 1000
+
+
+
 
 #define message(s, attr) do {      \
     attron((attr));         \

@@ -22,6 +22,7 @@ typedef struct {
     int games_count;
     Floor floors_arr[MAX_FLOORS];
     int active_floor;
+    Pos ladders[MAX_FLOORS][2];
     Pos position;
     int under_ch;
     int difficulty;

@@ -7,8 +7,20 @@ Floor *floors_arr;
 Pos visited[MAX_PATH] = {};
 int visited_count = 0;
 int is_visible = 0;
+Room ladder_room;
+
+const char* Mace = "⚒";
+const char* Ⅾagger = "\U0001F5E1";
+const char* Magic_wand = "\U0001FA84";
+const char* Normal_arrow = "\u27B3";
+const char* Sword = "\u2694";
+
+const char* health_p = "\u2764";
+const char* speed_p = "\u26A1";
+const char* damage_p = "\u2620";
 
 void generate_room() {
+
     int x1, width, y1, height;
     width = rand() % 15 + 5;
     height = rand() % 6 + 5;
@@ -127,6 +139,10 @@ void print_rooms(int flag) {
             mvaddch(temp.y + temp.doors[j].y, temp.x + temp.doors[j].x, '+');
         }
     }
+    if((mvinch(active_user->ladders[active_floor][1].y, active_user->ladders[active_floor][1].x) & A_CHARTEXT) != ' ')
+        mvprintw(active_user->ladders[active_floor][1].y, active_user->ladders[active_floor][1].x, "<");
+    else if((mvinch(active_user->ladders[active_floor][0].y, active_user->ladders[active_floor][0].x) & A_CHARTEXT) != ' ')
+        mvprintw(active_user->ladders[active_floor][0].y, active_user->ladders[active_floor][0].x, ">");
     mvprintw(0, 0, " ");
     attroff(A_BOLD);
 }
@@ -294,12 +310,24 @@ void connect_doors() {
 }
 void generate_floor() {
     floors_arr = active_user->floors_arr;
-    memset(floors_arr, 0, MAX_FLOORS * sizeof(Floor));
+    memset(floors_arr[active_floor].rooms_arr, 0, MAX_ROOMS * sizeof(Room));
     int counter = 0;
     rooms_count[active_floor] = 0;
+    if(active_floor > 0) {
+        rooms_arr[active_floor][0] = ladder_room;
+        rooms_count[active_floor]++;
+    }
     while(rooms_count[active_floor] < 6 || counter < 20) {
         counter++;
         generate_room();
+    }
+    if(active_floor > 0) {
+        active_user->ladders[active_floor][0] = active_user->ladders[active_floor - 1][1];
+    }
+    if(active_floor < MAX_FLOORS - 1) {
+        ladder_room = rooms_arr[active_floor][rooms_count[active_floor] - 1];
+        active_user->ladders[active_floor][1].x = ladder_room.x + rand() % (ladder_room.width - 1) + 1;
+        active_user->ladders[active_floor][1].y = ladder_room.y + rand() % (ladder_room.height - 1) + 1;
     }
     floors_arr[active_floor].rooms_count = rooms_count[active_floor];
     memcpy(floors_arr[active_floor].rooms_arr, rooms_arr[active_floor], rooms_count[active_floor] * sizeof(Room));
@@ -311,6 +339,7 @@ void generate_floor() {
     // getch();
     
 }
+
 void print_message_box() {
     attron(COLOR_PAIR(12));
     for(int i = 0; i < COLS; i++) {
@@ -328,9 +357,23 @@ void print_floor() {
     print_rooms(is_visible);
 
 }
+void check_hallway(int i, int j, Pos player) {
+    Pos hallway = floors_arr[active_floor].hallways[i][j];
+    if((active_user->under_ch & A_CHARTEXT) == '#' || (active_user->under_ch & A_CHARTEXT) == '+')
+        if(
+        (abs(player.x - hallway.x) <= 3 && abs(player.y - hallway.y) <= 1) ||
+        (abs(player.x - hallway.x) <= 1 && abs(player.y - hallway.y) <= 3)
+        ) {
+            floors_arr[active_floor].visible[i][j] = 1;
+        }
+    
+}
 void draw_hallway() {
     for(int i = 0; i < MAX_ROOMS * 4; i++) {
         for(int j = 0; j < floors_arr[active_floor].hallway_count[i]; j++) {
+            check_hallway(i, j, active_user->position);
+            if(floors_arr[active_floor].visible[i][j] == 0 && is_visible == 0)
+                continue;
             Pos current = floors_arr[active_floor].hallways[i][j];
             if((mvinch(current.y, current.x) & A_CHARTEXT) != '+')
                 mvaddch(current.y, current.x, '#');
@@ -348,7 +391,7 @@ int player_movement() {
     attroff(COLOR_PAIR(active_user->player_color));
     refresh();
     int previos;
-    halfdelay(5);
+    // halfdelay(5);
     while(1) {
         int index = is_in_room(*current);
         if(index >= 0)
@@ -359,32 +402,57 @@ int player_movement() {
         attroff(COLOR_PAIR(active_user->player_color));
         if(index < 0 && (previos & A_CHARTEXT) == '#') {
             message("You Entered a room (press any KEY to continue!)", COLOR_PAIR(12) | A_BLINK | A_BOLD);
-            cbreak();
+            // cbreak();
             getch();
-            halfdelay(5);
+            // halfdelay(5);
         }
         previos = active_user->under_ch;
-        active_user->under_ch = next_ch;
+        // active_user->under_ch = next_ch;
+        if((active_user->under_ch & A_CHARTEXT) == '<') {
+            message("You are on stairs use '<' to go to next floor", COLOR_PAIR(12));
+        }
+        else if((active_user->under_ch & A_CHARTEXT) == '>') {
+            message("You are on stairs use '>' to go to previos floor", COLOR_PAIR(12));
+        }
         refresh();
         int ch = getch();
-        
+        if(ch == ',' || ch == '<') {
+            if((active_user->under_ch & A_CHARTEXT) == '<') {
+            active_floor++;
+            print_floor();
+            active_user->under_ch = ('>' | A_BOLD);
+            }
+        }
+        if(ch == '.' || ch == '>') {
+            if((active_user->under_ch & A_CHARTEXT) == '>') {
+            active_floor--;
+            active_user->under_ch = ('<' | A_BOLD);
+            }
+        }
         if(ch == 'w' || ch == 'W') { /*move up*/
             int next_ch = mvinch(current->y - 1, current->x);
 
-            if((next_ch & A_CHARTEXT) == '#' || (next_ch & A_CHARTEXT) == '.' || (next_ch & A_CHARTEXT) == '+')
+            if((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != ' ')
             {
                 mvaddch(current->y, current->x, active_user->under_ch);
                 current->y--;
                 attron(COLOR_PAIR(active_user->player_color));
                 mvaddch(current->y, current->x, '@');
                 attroff(COLOR_PAIR(active_user->player_color));
-                active_user->under_ch = next_ch;                
+                active_user->under_ch = next_ch;          
+                      
             }
         }
         else if(ch == 'a' || ch == 'A') { /*move left*/
             int next_ch = mvinch(current->y, current->x - 1);
 
-            if((next_ch & A_CHARTEXT) == '#' || (next_ch & A_CHARTEXT) == '.' || (next_ch & A_CHARTEXT) == '+')
+            if((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != ' ')
             {
                 mvaddch(current->y, current->x, active_user->under_ch);
                 current->x--;
@@ -397,7 +465,10 @@ int player_movement() {
         else if(ch == 's' || ch == 'S') { /*move down*/
             int next_ch = mvinch(current->y + 1, current->x);
 
-            if((next_ch & A_CHARTEXT) == '#' || (next_ch & A_CHARTEXT) == '.' || (next_ch & A_CHARTEXT) == '+')
+            if((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != ' ')
             {
                 mvaddch(current->y, current->x, active_user->under_ch);
                 current->y++;
@@ -410,7 +481,10 @@ int player_movement() {
         else if(ch == 'd' || ch == 'D') { /*move right*/
             int next_ch = mvinch(current->y, current->x + 1);
 
-            if((next_ch & A_CHARTEXT) == '#' || (next_ch & A_CHARTEXT) == '.' || (next_ch & A_CHARTEXT) == '+')
+            if((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != ' ')
             {
                 mvaddch(current->y, current->x, active_user->under_ch);
                 current->x++;
@@ -424,7 +498,10 @@ int player_movement() {
         else if(ch == 'q' || ch == 'Q') { /*move up-left*/
             int next_ch = mvinch(current->y - 1, current->x - 1);
 
-            if((next_ch & A_CHARTEXT) == '#' || (next_ch & A_CHARTEXT) == '.' || (next_ch & A_CHARTEXT) == '+')
+            if((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != ' ')
             {
                 mvaddch(current->y, current->x, active_user->under_ch);
                 current->x--;
@@ -438,7 +515,10 @@ int player_movement() {
         else if(ch == 'e' || ch == 'E') { /*move up-right*/
             int next_ch = mvinch(current->y - 1, current->x + 1);
 
-            if((next_ch & A_CHARTEXT) == '#' || (next_ch & A_CHARTEXT) == '.' || (next_ch & A_CHARTEXT) == '+')
+            if((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != ' ')
             {
                 mvaddch(current->y, current->x, active_user->under_ch);
                 current->x++;
@@ -452,7 +532,10 @@ int player_movement() {
         else if(ch == 'z' || ch == 'Z') { /*move down-left*/
             int next_ch = mvinch(current->y + 1, current->x - 1);
 
-            if((next_ch & A_CHARTEXT) == '#' || (next_ch & A_CHARTEXT) == '.' || (next_ch & A_CHARTEXT) == '+')
+            if((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != ' ')
             {
                 mvaddch(current->y, current->x, active_user->under_ch);
                 current->x--;
@@ -466,7 +549,10 @@ int player_movement() {
         else if(ch == 'x' || ch == 'X') { /*move down-right*/
             int next_ch = mvinch(current->y + 1, current->x + 1);
 
-            if((next_ch & A_CHARTEXT) == '#' || (next_ch & A_CHARTEXT) == '.' || (next_ch & A_CHARTEXT) == '+')
+            if((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != ' ')
             {
                 mvaddch(current->y, current->x, active_user->under_ch);
                 current->x++;
@@ -482,7 +568,10 @@ int player_movement() {
         else if(ch == KEY_LEFT) {
             int next_ch = mvinch(current->y, current->x - 1);
 
-            while((next_ch & A_CHARTEXT) == '#' || (next_ch & A_CHARTEXT) == '.' || (next_ch & A_CHARTEXT) == '+')
+            while((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != ' ')
             {   
 
                 mvaddch(current->y, current->x, active_user->under_ch);
@@ -492,13 +581,20 @@ int player_movement() {
                 mvaddch(current->y, current->x, '@');
                 attroff(COLOR_PAIR(active_user->player_color));
                 active_user->under_ch = next_ch;
-                next_ch = mvinch(current->y, current->x - 1);                
+                next_ch = mvinch(current->y, current->x - 1);
+                index = is_in_room(*current);
+                if(index >= 0)
+                    floors_arr[active_floor].rooms_arr[index].visible = 1;                
+                print_floor();              
             }
         }
         else if(ch == KEY_UP) {
             int next_ch = mvinch(current->y - 1, current->x);
 
-            while((next_ch & A_CHARTEXT) == '#' || (next_ch & A_CHARTEXT) == '.' || (next_ch & A_CHARTEXT) == '+')
+            while((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != ' ')
             {   
 
                 mvaddch(current->y, current->x, active_user->under_ch);
@@ -508,13 +604,20 @@ int player_movement() {
                 mvaddch(current->y, current->x, '@');
                 attroff(COLOR_PAIR(active_user->player_color));
                 active_user->under_ch = next_ch;
-                next_ch = mvinch(current->y - 1, current->x);                
+                next_ch = mvinch(current->y - 1, current->x);
+                index = is_in_room(*current);
+                if(index >= 0)
+                    floors_arr[active_floor].rooms_arr[index].visible = 1;                
+                print_floor();              
             }
         }
         else if(ch == KEY_DOWN) {
             int next_ch = mvinch(current->y + 1, current->x);
 
-            while((next_ch & A_CHARTEXT) == '#' || (next_ch & A_CHARTEXT) == '.' || (next_ch & A_CHARTEXT) == '+')
+            while((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != ' ')
             {   
 
                 mvaddch(current->y, current->x, active_user->under_ch);
@@ -524,13 +627,20 @@ int player_movement() {
                 mvaddch(current->y, current->x, '@');
                 attroff(COLOR_PAIR(active_user->player_color));
                 active_user->under_ch = next_ch;
-                next_ch = mvinch(current->y + 1, current->x);                
+                next_ch = mvinch(current->y + 1, current->x);
+                index = is_in_room(*current);
+                if(index >= 0)
+                    floors_arr[active_floor].rooms_arr[index].visible = 1;                
+                print_floor();              
             }
         }
         else if(ch == KEY_RIGHT) {
             int next_ch = mvinch(current->y, current->x + 1);
 
-            while((next_ch & A_CHARTEXT) == '#' || (next_ch & A_CHARTEXT) == '.' || (next_ch & A_CHARTEXT) == '+')
+            while((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
+            (next_ch & A_CHARTEXT) != ' ')
             {   
 
                 mvaddch(current->y, current->x, active_user->under_ch);
@@ -540,7 +650,11 @@ int player_movement() {
                 mvaddch(current->y, current->x, '@');
                 attroff(COLOR_PAIR(active_user->player_color));
                 active_user->under_ch = next_ch;
-                next_ch = mvinch(current->y, current->x + 1);                
+                next_ch = mvinch(current->y, current->x + 1);  
+                index = is_in_room(*current);
+                if(index >= 0)
+                    floors_arr[active_floor].rooms_arr[index].visible = 1;
+                print_floor();              
             }
         }
         
@@ -551,14 +665,22 @@ int player_movement() {
                 is_visible = 0;
         }
 
+
         else if(ch == 27) {
-            cbreak();
+            clear();
+            attron(COLOR_PAIR(3) | A_BOLD);
+            mvprintw(LINES / 2, (COLS - 15) / 2, "Saving Game...");
+            attroff(COLOR_PAIR(3) | A_BOLD);
+            refresh();
+            usleep(100000);
+            save_users(&arr, users_count);
+            // cbreak();
             return 27;
         }
         
         refresh();
     }
-    cbreak();
+    // cbreak();
 }
 
 int resume_game() {
