@@ -296,10 +296,11 @@ int pregame_menu() {
     while (1){
         if(choose == 0) {
             active_floor = 0;
+            // memset(active_user, 0, MAX_ROOMS * sizeof(Room));
             while(active_floor < MAX_FLOORS) 
             {
-                generate_floor();
                 clear();
+                generate_floor();
                 active_floor++;
                 active_user->active_floor = active_floor;
             }

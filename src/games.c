@@ -118,9 +118,8 @@ void print_rooms(int flag) {
     attron(A_BOLD);
     for(int i = 0; i < rooms_count[active_floor]; i++) {
         Room temp = rooms_arr[active_floor][i];
-        if(i != 0)
-            if(temp.visible == 0 && flag == 0)
-                continue;
+        if(temp.visible == 0 && flag == 0)
+            continue;
         for(int j = temp.x; j <= temp.x + temp.width; j++) {
             for(int k = temp.y; k <= temp.y + temp.height; k++) {
                 if(k == temp.y || k == temp.y + temp.height)
@@ -141,7 +140,7 @@ void print_rooms(int flag) {
     }
     if((mvinch(active_user->ladders[active_floor][1].y, active_user->ladders[active_floor][1].x) & A_CHARTEXT) != ' ')
         mvprintw(active_user->ladders[active_floor][1].y, active_user->ladders[active_floor][1].x, "<");
-    else if((mvinch(active_user->ladders[active_floor][0].y, active_user->ladders[active_floor][0].x) & A_CHARTEXT) != ' ')
+    if((mvinch(active_user->ladders[active_floor][0].y, active_user->ladders[active_floor][0].x) & A_CHARTEXT) != ' ')
         mvprintw(active_user->ladders[active_floor][0].y, active_user->ladders[active_floor][0].x, ">");
     mvprintw(0, 0, " ");
     attroff(A_BOLD);
@@ -310,7 +309,8 @@ void connect_doors() {
 }
 void generate_floor() {
     floors_arr = active_user->floors_arr;
-    memset(floors_arr[active_floor].rooms_arr, 0, MAX_ROOMS * sizeof(Room));
+    // memset(floors_arr[active_floor].rooms_arr, 0, MAX_ROOMS * sizeof(Room));
+    memset(&floors_arr[active_floor], 0, sizeof(Floor));
     int counter = 0;
     rooms_count[active_floor] = 0;
     if(active_floor > 0) {
@@ -324,17 +324,24 @@ void generate_floor() {
     if(active_floor > 0) {
         active_user->ladders[active_floor][0] = active_user->ladders[active_floor - 1][1];
     }
-    if(active_floor < MAX_FLOORS - 1) {
+    if(active_floor < MAX_FLOORS - 1 && active_floor != 0) {
         ladder_room = rooms_arr[active_floor][rooms_count[active_floor] - 1];
         active_user->ladders[active_floor][1].x = ladder_room.x + rand() % (ladder_room.width - 1) + 1;
         active_user->ladders[active_floor][1].y = ladder_room.y + rand() % (ladder_room.height - 1) + 1;
+        ladder_room.visible = 1;
     }
     floors_arr[active_floor].rooms_count = rooms_count[active_floor];
     memcpy(floors_arr[active_floor].rooms_arr, rooms_arr[active_floor], rooms_count[active_floor] * sizeof(Room));
     qsort(floors_arr[active_floor].rooms_arr, rooms_count[active_floor], sizeof(Room), compare_distance);
-
+    
     print_rooms(1);
     connect_doors();
+    if(active_floor == 0) {
+        ladder_room = rooms_arr[active_floor][rooms_count[active_floor] - 1];
+        active_user->ladders[active_floor][1].x = ladder_room.x + rand() % (ladder_room.width - 1) + 1;
+        active_user->ladders[active_floor][1].y = ladder_room.y + rand() % (ladder_room.height - 1) + 1;
+        ladder_room.visible = 1;
+    }
     // refresh();
     // getch();
     
@@ -382,7 +389,9 @@ void draw_hallway() {
 }
 
 int player_movement() {
-    rooms_arr[active_floor][0].visible = 1;
+    rooms_arr[0][0].visible = 1;
+    floors_arr[0].rooms_arr[0].visible = 1;
+
     Pos *current = &active_user->position;
     int next_ch = mvinch(current->y, current->x);
     active_user->under_ch = next_ch;
@@ -395,12 +404,15 @@ int player_movement() {
     while(1) {
         int index = is_in_room(*current);
         if(index >= 0)
+        {
             floors_arr[active_floor].rooms_arr[index].visible = 1;
+            rooms_arr[active_floor][index].visible = 1;
+        }
         print_floor();
         attron(COLOR_PAIR(active_user->player_color));
         mvaddch(current->y, current->x, '@');
         attroff(COLOR_PAIR(active_user->player_color));
-        if(index < 0 && (previos & A_CHARTEXT) == '#') {
+        if(index < -1 && (previos & A_CHARTEXT) == '#') {
             message("You Entered a room (press any KEY to continue!)", COLOR_PAIR(12) | A_BLINK | A_BOLD);
             // cbreak();
             getch();
@@ -419,8 +431,8 @@ int player_movement() {
         if(ch == ',' || ch == '<') {
             if((active_user->under_ch & A_CHARTEXT) == '<') {
             active_floor++;
-            print_floor();
             active_user->under_ch = ('>' | A_BOLD);
+            print_floor();
             }
         }
         if(ch == '.' || ch == '>') {
@@ -667,6 +679,7 @@ int player_movement() {
 
 
         else if(ch == 27) {
+            active_user->active_floor = active_floor;
             clear();
             attron(COLOR_PAIR(3) | A_BOLD);
             mvprintw(LINES / 2, (COLS - 15) / 2, "Saving Game...");
@@ -701,10 +714,10 @@ int is_in_room(Pos p) {
         //     return -i - 1;
         for(int j = 0; j < temp.door_num; j++ ) {
             if(abs(p.x - (temp.x + temp.doors[j].x)) == 0 && abs(p.y - (temp.y + temp.doors[j].y)) == 0)
-                return -i - 1;
+                return -i - 2;
             if(abs(p.x - (temp.x + temp.doors[j].x)) <= 2 && abs(p.y - (temp.y + temp.doors[j].y)) <= 2)
                 return i;
         }
     }
-    return 0;
+    return -1;
 }
