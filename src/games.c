@@ -8,16 +8,19 @@ Pos visited[MAX_PATH] = {};
 int visited_count = 0;
 int is_visible = 0;
 Room ladder_room;
+Game g = {};
 
-const char* Mace = "⚒";
-const char* Ⅾagger = "\U0001F5E1";
-const char* Magic_wand = "\U0001FA84";
-const char* Normal_arrow = "\u27B3";
-const char* Sword = "\u2694";
+const char* Mace = "⚒"; // 0
+const char* Dagger = "\U0001F5E1"; // 1
+const char* Magic_wand = "\U0001FA84"; // 2
+const char* Normal_arrow = "\u27B3"; // 3
+const char* Sword = "\u2694"; // 4
+const char *tools_icon[] = {"⚒", "\U0001F5E1", "\U0001FA84", "\u27B3", "\u2694"};
 
-const char* health_p = "\u2764";
-const char* speed_p = "\u26A1";
-const char* damage_p = "\u2620";
+const char* health_p = "\u2764";// 0
+const char* speed_p = "\u26A1"; // 1
+const char* damage_p = "\u2620"; // 2
+const char* enchant_icons[] = {"\u2764", "\u26A1", "\u2620"};
 
 void generate_room() {
 
@@ -307,6 +310,116 @@ void connect_doors() {
         
     }
 }
+void add_tools() {
+    for(int i = 1; i < 5; i++) {
+        g.tool_floor[i] = rand() % MAX_FLOORS;
+        int ind = rand() % rooms_count[g.tool_floor[i]];
+        int x = rand() % (rooms_arr[g.tool_floor[i]][ind].width - 2) + 1 + rooms_arr[g.tool_floor[i]][ind].x;
+        int y = rand() % (rooms_arr[g.tool_floor[i]][ind].height - 1) + 1 + rooms_arr[g.tool_floor[i]][ind].y;
+        Pos temp = {x, y};
+        g.tool_location[i] = temp;
+    }
+}
+void print_tools() {
+    for(int i = 1; i < 5; i++) {
+        if(active_floor != g.tool_floor[i])
+            continue;
+        Pos temp = g.tool_location[i];
+        if(temp.x != 0 && temp.y != 0 && (mvinch(temp.y, temp.x) & A_CHARTEXT) == '.')
+            mvprintw(temp.y, temp.x, "%s", tools_icon[i]);
+    }
+}
+void add_enchant() 
+{
+    for(int i = 0; i < MAX_FLOORS; i++) {
+        int ind = rand() % rooms_count[g.tool_floor[i]];
+        int x = rand() % (rooms_arr[g.tool_floor[i]][ind].width - 2) + 1 + rooms_arr[g.tool_floor[i]][ind].x;
+        int y = rand() % (rooms_arr[g.tool_floor[i]][ind].height - 1) + 1 + rooms_arr[g.tool_floor[i]][ind].y;
+        Pos temp = {x, y};
+        g.damage_loc[i] = temp;
+    }
+    for(int i = 0; i < MAX_FLOORS; i++) {
+        int ind = rand() % rooms_count[g.tool_floor[i]];
+        int x = rand() % (rooms_arr[g.tool_floor[i]][ind].width - 2) + 1 + rooms_arr[g.tool_floor[i]][ind].x;
+        int y = rand() % (rooms_arr[g.tool_floor[i]][ind].height - 1) + 1 + rooms_arr[g.tool_floor[i]][ind].y;
+        Pos temp = {x, y};
+        g.speed_loc[i] = temp;
+    }
+    for(int i = 0; i < MAX_FLOORS; i++) {
+        int ind = rand() % rooms_count[g.tool_floor[i]];
+        int x = rand() % (rooms_arr[g.tool_floor[i]][ind].width - 2) + 1 + rooms_arr[g.tool_floor[i]][ind].x;
+        int y = rand() % (rooms_arr[g.tool_floor[i]][ind].height - 1) + 1 + rooms_arr[g.tool_floor[i]][ind].y;
+        Pos temp = {x, y};
+        g.health_loc[i] = temp;
+    }
+}
+void print_enchants() {
+    Pos temp = g.health_loc[active_floor];
+    if(temp.x != 0 && temp.y != 0 && (mvinch(temp.y, temp.x) & A_CHARTEXT) == '.')
+        mvprintw(temp.y, temp.x, "%s", enchant_icons[0]);
+    temp = g.speed_loc[active_floor];
+    if(temp.x != 0 && temp.y != 0 && (mvinch(temp.y, temp.x) & A_CHARTEXT) == '.')
+        mvprintw(temp.y, temp.x, "%s", enchant_icons[1]);
+    temp = g.damage_loc[active_floor];
+    if(temp.x != 0 && temp.y != 0 && (mvinch(temp.y, temp.x) & A_CHARTEXT) == '.')
+        mvprintw(temp.y, temp.x, "%s", enchant_icons[2]);
+}
+
+void add_golds() {
+    for(int i = 0; i < MAX_FLOORS; i++) {
+        for(int j = 0; j < 3; j++) {
+            int ind = rand() % rooms_count[i];
+            int x = rand() % (rooms_arr[i][ind].width - 2) + 1 + rooms_arr[i][ind].x;
+            int y = rand() % (rooms_arr[i][ind].height - 1) + 1 + rooms_arr[i][ind].y;
+            Pos temp = {x, y};
+            g.gold_loc[i][j] = temp;
+        }
+    }
+}
+void print_gold() {
+    attron(COLOR_PAIR(12));
+    for(int i = 0; i < MAX_FLOORS; i++) {
+        for(int j = 0; j < 2; j++) {
+            if(g.gold_loc[i][j].y != 0 && g.gold_loc[i][j].x != 0)
+                mvprintw(g.gold_loc[i][j].y, g.gold_loc[i][j].x, "$");
+        }
+    }
+    attroff(COLOR_PAIR(12));
+    attron(COLOR_PAIR(7) | A_BOLD);
+    for(int i = 0; i < MAX_FLOORS; i++) {
+        if(g.gold_loc[i][2].y != 0 && g.gold_loc[i][2].x != 0)
+                mvprintw(g.gold_loc[i][2].y, g.gold_loc[i][2].x, "$");
+    }
+    attroff(COLOR_PAIR(7) | A_BOLD);
+    
+}
+void add_foods() {
+    for(int i = 0; i < MAX_FLOORS; i++) {
+        for(int j = 0; j < rooms_count[i]; j++) 
+        {
+            int x = rand() % (rooms_arr[i][j].width - 2) + 1 + rooms_arr[i][j].x;
+            int y = rand() % (rooms_arr[i][j].height - 1) + 1 + rooms_arr[i][j].y;
+            Pos temp = {x, y};
+            g.food_loc[i][j] = temp;
+        }
+    }
+}
+void print_foods() {
+    for(int i = 0; i < MAX_FLOORS; i++) 
+    {
+        for(int j = 0; j < rooms_count[i]; j++) 
+        {
+            if(g.food_loc[i][j].y != 0 && g.food_loc[i][j].x)
+                mvprintw(g.food_loc[i][j].y, g.food_loc[i][j].x, "f");
+        }
+    }
+}
+
+void print_elements() 
+{
+    
+}
+
 void generate_floor() {
     floors_arr = active_user->floors_arr;
     // memset(floors_arr[active_floor].rooms_arr, 0, MAX_ROOMS * sizeof(Room));
@@ -335,6 +448,9 @@ void generate_floor() {
     qsort(floors_arr[active_floor].rooms_arr, rooms_count[active_floor], sizeof(Room), compare_distance);
     
     print_rooms(1);
+
+    add_tools();
+
     connect_doors();
     if(active_floor == 0) {
         ladder_room = rooms_arr[active_floor][rooms_count[active_floor] - 1];
@@ -347,12 +463,18 @@ void generate_floor() {
     
 }
 
+
 void print_message_box() {
     attron(COLOR_PAIR(12));
     for(int i = 0; i < COLS; i++) {
-        mvaddch(1, i, ACS_HLINE);
+        mvaddch(2, i, ACS_HLINE);
     }
     attroff(COLOR_PAIR(12));
+    attron(COLOR_PAIR(6) | A_BOLD);
+    mvprintw(1, COLS - 13, "Golds : %d ", g.gold);
+    mvprintw(1, 0, "Health : %d %% hunger : %d %% foods in inventory: %d", g.health, g.hunger, g.food);
+    attroff(COLOR_PAIR(6) | A_BOLD);
+
 }
 void print_floor() {
     clear();
@@ -400,8 +522,12 @@ int player_movement() {
     attroff(COLOR_PAIR(active_user->player_color));
     refresh();
     int previos;
+    int move = 0;
     // halfdelay(5);
     while(1) {
+        g.hunger += active_user->difficulty + 1;
+        if(g.hunger >= 100)
+            return 1;
         int index = is_in_room(*current);
         if(index >= 0)
         {
@@ -697,14 +823,23 @@ int player_movement() {
 }
 
 int resume_game() {
+    g = active_user->last_game;
     if(active_user->floors_arr[0].rooms_count == 0)
     {
         return 404;
     }
+    print_floor();
+    add_tools();
+    add_golds();
+    add_foods();
     clear();
     print_floor();
     refresh();
-    player_movement();
+    int val = player_movement();
+    if (val == 1)
+
+    if(val == 27)
+        active_user->last_game = g;
 }
 
 int is_in_room(Pos p) {

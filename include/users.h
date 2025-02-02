@@ -26,6 +26,7 @@ typedef struct {
     Pos position;
     int under_ch;
     int difficulty;
+    Game last_game;
     time_t start_time;
 }Users;
 

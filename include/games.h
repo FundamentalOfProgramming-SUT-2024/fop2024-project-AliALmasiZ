@@ -47,7 +47,25 @@ typedef struct Floor
     uint16_t hallway_count[MAX_ROOMS * 4];
     uint8_t visible[MAX_ROOMS * 4][MAX_PATH];
 } Floor;
+typedef struct Game {
+    uint16_t gold;
+    uint8_t health;
+    uint8_t food : 3;
+    uint8_t active_tool : 3;
+    uint8_t speed_count : 3;
+    uint8_t damage_count : 3;
+    uint8_t health_count : 3;
+    uint8_t hunger;
+    uint8_t tools[5];
+    Pos gold_loc[MAX_FLOORS][3];
+    Pos tool_location[5];
+    uint8_t tool_floor[5];
+    Pos food_loc[MAX_FLOORS][MAX_ROOMS];
+    Pos speed_loc[MAX_FLOORS];
+    Pos damage_loc[MAX_FLOORS];
+    Pos health_loc[MAX_FLOORS];
 
+} Game;
 
 extern Room rooms_arr[MAX_FLOORS][MAX_ROOMS];
 extern int rooms_count[MAX_FLOORS];

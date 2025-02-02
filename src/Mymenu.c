@@ -296,7 +296,13 @@ int pregame_menu() {
     while (1){
         if(choose == 0) {
             active_floor = 0;
+            memset(&active_user->last_game, 0, sizeof(Game));
+            active_user->last_game.health = 100;
+            active_user->last_game.tools[0] = 1;
             // memset(active_user, 0, MAX_ROOMS * sizeof(Room));
+            for(int i = 1; i < 5; i ++) {
+                active_user->last_game.tool_floor[i] = rand() % MAX_FLOORS;
+            }
             while(active_floor < MAX_FLOORS) 
             {
                 clear();
