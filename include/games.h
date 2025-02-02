@@ -13,6 +13,14 @@
 #define MAX_FLOORS 4
 #define DISTANCE 2
 #define MAX_PATH 1000
+
+#define message(s, attr) do {      \
+    attron((attr));         \
+    mvprintw(0, 0, "%s", (s));      \
+    attroff((attr));           \
+} while(0)
+
+
 typedef struct Pos {
     int x;
     int y;
@@ -45,7 +53,7 @@ extern int active_floor;
 int compare_distance(const void *a, const void *b);
 void generate_room();
 int can_make(Room r);
-void print_rooms();
+void print_rooms(int flag);
 void connect_rooms();
 void connect_doors();
 void generate_floor();
