@@ -13,6 +13,7 @@
 
 
 typedef struct {
+    time_t start_time;
     int player_color;
     char username[MAX_LEN];
     char password[MAX_LEN];
@@ -27,7 +28,6 @@ typedef struct {
     int under_ch;
     int difficulty;
     Game last_game;
-    time_t start_time;
 }Users;
 
 int load_users(Users **arr);

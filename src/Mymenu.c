@@ -138,7 +138,7 @@ int sign_up_menu(Users **arr, int *n) {
     mvprintw(LINES - 2, 0, "Press Esc key to go to main menu");
 
     while(true) {
-        draw_logo(1 , "Credit: Ali Almasi", 3);
+        draw_logo(1 , "Welcome to Rogue", 3);
         echo();
         attron(COLOR_PAIR(4));
         mvprintw((LINES - 7) / 2 + 7, (COLS - 30) / 2, "%s", "Username: ");
@@ -303,10 +303,13 @@ int pregame_menu() {
             for(int i = 1; i < 5; i ++) {
                 active_user->last_game.tool_floor[i] = rand() % MAX_FLOORS;
             }
+            active_floor = 0;
+            active_user->active_floor = 0;
             while(active_floor < MAX_FLOORS) 
             {
                 clear();
                 generate_floor();
+                // getch();
                 active_floor++;
                 active_user->active_floor = active_floor;
             }
@@ -315,7 +318,7 @@ int pregame_menu() {
             active_user->position.x = active_user->floors_arr[active_floor].rooms_arr[0].x + 1;
             active_user->position.y = active_user->floors_arr[active_floor].rooms_arr[0].y + 1;
             active_user->under_ch = mvinch(active_user->position.x, active_user->position.y);
-            
+            init_game();
             resume_game();
             choose = menu("PreGame menu ", 6, options, 4);
         }
@@ -366,40 +369,15 @@ int pregame_menu() {
                 const char *m_settings[] = {"First music", "Second Music", "Music Off"};
                 int ms = menu("Select Music :", 3, m_settings, 3);
                 
-                SDL_Init(SDL_INIT_AUDIO);
-                Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048);
-                Mix_VolumeMusic(120);
-                Mix_Music *music = NULL;
                 if(ms == 0) {
-                    if(music != NULL)
-                        Mix_FreeMusic(music);
-                    music = Mix_LoadMUS("../music/first.mp3");
-                    // if(!music)
-                        // return 404;
-                    // Mix_PlayMusic(music, -1);
-                    if (Mix_PlayMusic(music, -1) == -1) {
-                        mvprintw(1,0, "Mix_PlayMusic error: %s\n", Mix_GetError());
-                        refresh();
-                    }
-                    Mix_VolumeMusic(120);
-
-                    getch();
+                    play_music("./music/first.mp3", 1);
                 }
                 else if(ms == 1) {
-                    if(music != NULL)
-                        Mix_FreeMusic(music);
-                    music = Mix_LoadMUS("../music/second.mp3");
-                    if(!music)
-                        return 404;
-                    Mix_PlayMusic(music, -1);
-                    Mix_VolumeMusic(120);
-
+                    
+                    play_music("./music/second.mp3", 1);
                 }
                 else if (ms == 2 || ms == 27) {
-                    if(music != NULL)
-                        Mix_FreeMusic(music);
-                    Mix_CloseAudio();
-                    SDL_Quit();
+                    play_music("", 0);
                 } 
 
                 choose = menu("Music Settings have been set!", 6, options, 4);
@@ -543,31 +521,51 @@ char *random_password() {
     res[len] = 0;
     return res;
 }
-int play_music(const char * path, int flag) {
-    if(!flag) {
+
+
+/*should run with "padsp ./main.out" command*/
+int play_music(const char *path, int flag) { 
+    static int is_initialized = 0;
+
+    if (!flag) {
         Mix_HaltMusic();
-    }else {
+        return 0;
+    }
+
+    if (!is_initialized) {
         if (SDL_Init(SDL_INIT_AUDIO) < 0) {
-            fprintf(stderr, "SDL_Init error: %s\n", SDL_GetError());
+            clear();
+            mvprintw(0, 0, "SDL_Init error: %s\n", SDL_GetError());
+            getch();
             return 1;
         }
         if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
-            fprintf(stderr, "Mix_OpenAudio error: %s\n", Mix_GetError());
+            clear();
+            mvprintw(0, 0, "Mix_OpenAudio error: %s\n", Mix_GetError());
+            getch();
             SDL_Quit();
             return 1;
         }
-
-        Mix_VolumeMusic(120);
-        Mix_Music *music = Mix_LoadMUS(path);
-        if (Mix_PlayMusic(music, -1) == -1) {
-                fprintf(stderr, "Mix_PlayMusic error: %s\n", Mix_GetError());
-                return 500;
-        }
-        if(Mix_PlayingMusic())
-            return 0;
+        is_initialized = 1;
     }
-    if(Mix_PlayingMusic())
-            return 0;
-    return 1;
+    Mix_HaltMusic();
+    Mix_Music *music = Mix_LoadMUS(path);
+    if (!music) {
+        clear();
+        mvprintw(0, 0, "Mix_LoadMUS error: %s\n", Mix_GetError());
+        getch();
+        return 1;
+    }
+
+    if (Mix_PlayMusic(music, -1) == -1) {
+        clear();
+        mvprintw(0, 0, "Mix_PlayMusic error: %s\n", Mix_GetError());
+        getch();
+        Mix_FreeMusic(music);
+        return 1;
+    }
+
+    Mix_VolumeMusic(120);
     
+    return 0;
 }

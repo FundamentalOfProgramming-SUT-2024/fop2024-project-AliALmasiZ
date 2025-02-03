@@ -26,20 +26,22 @@ void save_users(Users **arr, int users_count) {
     qsort(*arr, users_count, sizeof(Users), compare_name);
     FILE *usersfile = fopen("users.bin", "wb");
     fseek(usersfile, 0, SEEK_SET);
-    for(int i = 0; i < users_count; i++) {
-        fwrite(*arr + i, sizeof(Users), 1, usersfile);
-    }
+    // for(int i = 0; i < users_count; i++) {
+        // fwrite(*arr + i, sizeof(Users), 1, usersfile);
+    // }
+    fwrite(*arr, sizeof(Users) * users_count, 1, usersfile);
     fclose(usersfile);
 }
 void sign_up(Users **arr, int *users_count, const char *username, const char *pass, const char *email) {
     strcpy((*arr + *users_count)->email, email);
     strcpy((*arr + *users_count)->username, username);
     strcpy((*arr + *users_count)->password, pass);
-    (*users_count)++;
-    save_users(arr, *users_count);
     (*arr + *users_count)->start_time = time(NULL);
     (*arr + *users_count)->player_color = 1;
+    (*arr + *users_count)->difficulty = 1;
     
+    (*users_count)++;
+    save_users(arr, *users_count);
 }
 int log_in(Users **arr, int users_count, const char *username, const char *password) {
     Users *temp = (Users *)check_username(arr, users_count, username);

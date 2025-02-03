@@ -1,7 +1,8 @@
 #ifndef MENU_H
 #define MENU_H
 #include "users.h"
-#include <ncurses.h>
+// #define _GNU_SOURCE
+#include <ncursesw/ncurses.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <locale.h>

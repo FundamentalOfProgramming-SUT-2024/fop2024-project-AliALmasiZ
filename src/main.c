@@ -63,6 +63,9 @@ int main() {
         }
         else if(choose == 2) { //guest
             active_user = &temp_user;
+            active_user->active_floor = 0;
+            active_user->difficulty = 1;
+            active_user->player_color = 1;
             int val = pregame_menu();
             if(val == 27) {
                 active_user = NULL;

@@ -1,7 +1,8 @@
 #ifndef _GAME_H
 #define _GAME_H
 
-#include <ncurses.h>
+// #define _GNU_SOURCE
+#include <ncursesw/ncurses.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -24,10 +25,14 @@
 } while(0)
 
 
+
+
 typedef struct Pos {
     int x;
     int y;
 }Pos;
+
+
 typedef struct Room {
     uint16_t x;
     uint16_t y;
@@ -39,6 +44,7 @@ typedef struct Room {
     uint8_t visible;
 }Room;
 
+
 typedef struct Floor
 {
     Room rooms_arr[MAX_ROOMS];
@@ -47,15 +53,17 @@ typedef struct Floor
     uint16_t hallway_count[MAX_ROOMS * 4];
     uint8_t visible[MAX_ROOMS * 4][MAX_PATH];
 } Floor;
+
+
 typedef struct Game {
     uint16_t gold;
-    uint8_t health;
+    int8_t health;
     uint8_t food : 3;
     uint8_t active_tool : 3;
     uint8_t speed_count : 3;
     uint8_t damage_count : 3;
     uint8_t health_count : 3;
-    uint8_t hunger;
+    int8_t hunger;
     uint8_t tools[5];
     Pos gold_loc[MAX_FLOORS][3];
     Pos tool_location[5];
@@ -64,12 +72,14 @@ typedef struct Game {
     Pos speed_loc[MAX_FLOORS];
     Pos damage_loc[MAX_FLOORS];
     Pos health_loc[MAX_FLOORS];
+    Room treasure;
 
 } Game;
 
 extern Room rooms_arr[MAX_FLOORS][MAX_ROOMS];
 extern int rooms_count[MAX_FLOORS];
 extern int active_floor;
+extern Game g;
 
 int compare_distance(const void *a, const void *b);
 void generate_room();
@@ -83,5 +93,7 @@ void draw_hallway();
 int player_movement();
 int resume_game();
 int is_in_room(Pos p);
+void print_elements();
+int init_game();
 
 #endif

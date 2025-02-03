@@ -12,15 +12,18 @@ Game g = {};
 
 const char* Mace = "⚒"; // 0
 const char* Dagger = "\U0001F5E1"; // 1
-const char* Magic_wand = "\U0001FA84"; // 2
-const char* Normal_arrow = "\u27B3"; // 3
-const char* Sword = "\u2694"; // 4
-const char *tools_icon[] = {"⚒", "\U0001F5E1", "\U0001FA84", "\u27B3", "\u2694"};
+const char* Magic_wand = "\U0001FA84"; // 2 -> -107
+const char* Normal_arrow = "\u27B3"; // 3 -> -77
+const char* Sword = "\u2694"; // 4 -> -108
+const char *tools_icon[] = {"⚒", "d", "\u2695", "\u27B3", "\u2694"};
+const char *tools_name[] = {"Mace", "Dagger", "Magic Wand", "Normal arrow", "Sword"};
 
-const char* health_p = "\u2764";// 0
-const char* speed_p = "\u26A1"; // 1
-const char* damage_p = "\u2620"; // 2
-const char* enchant_icons[] = {"\u2764", "\u26A1", "\u2620"};
+const char* health_p = "\u2764";// 0 -> d
+const char* speed_p = "\u26A1"; // 1 
+const char* damage_p = "\u2620"; // 2 -> ' '
+const char* enchant_icons[] = {"\u2764", "s", "\u2620"};
+
+
 
 void generate_room() {
 
@@ -182,6 +185,7 @@ int make_hallway(int start_x, int start_y, int end_x, int end_y) {
     Pos current = {start_x, start_y};
     visited_count = 0;
     int flag;
+    memset(visited, 0, sizeof(visited));
     while(1) {    
         visited[visited_count++] = current;
         if (visited_count >= MAX_PATH - 1) {
@@ -197,22 +201,43 @@ int make_hallway(int start_x, int start_y, int end_x, int end_y) {
         dx = (end_x > current.x) ? 1 : (end_x < current.x) ? -1 : 0;
         dy = (end_y > current.y) ? 1 : (end_y < current.y) ? -1 : 0;
 
-        if(dy != 0 && !is_overlap(current.x, current.y + dy) && !is_visited(current.x, current.y + dy)) {
-            flag = 1;
-            current.y += dy;
-            mvaddch(current.y, current.x, '#');
-            // refresh();
-            // getch();
-            continue;
-            
+        if(rand() % 2 == 0) {
+            if(dy != 0 && !is_overlap(current.x, current.y + dy) && !is_visited(current.x, current.y + dy)) {
+                flag = 1;
+                current.y += dy;
+                mvaddch(current.y, current.x, '#');
+                // refresh();
+                // getch();
+                continue;
+                
+            }
+            if(dx != 0 && !is_overlap(current.x + dx, current.y) && !is_visited(current.x + dx, current.y)) {
+                flag = 0;
+                current.x += dx;
+                mvaddch(current.y, current.x, '#');
+                // refresh();
+                // getch();
+                continue;
+            }
         }
-        if(dx != 0 && !is_overlap(current.x + dx, current.y) && !is_visited(current.x + dx, current.y)) {
-            flag = 0;
-            current.x += dx;
-            mvaddch(current.y, current.x, '#');
-            // refresh();
-            // getch();
-            continue;
+        else {
+            if(dx != 0 && !is_overlap(current.x + dx, current.y) && !is_visited(current.x + dx, current.y)) {
+                flag = 0;
+                current.x += dx;
+                mvaddch(current.y, current.x, '#');
+                // refresh();
+                // getch();
+                continue;
+            }
+            if(dy != 0 && !is_overlap(current.x, current.y + dy) && !is_visited(current.x, current.y + dy)) {
+                flag = 1;
+                current.y += dy;
+                mvaddch(current.y, current.x, '#');
+                // refresh();
+                // getch();
+                continue;
+                
+            }
         }
         Pos moves[4];
         if(dy == 0) {
@@ -267,6 +292,9 @@ int make_hallway(int start_x, int start_y, int end_x, int end_y) {
             }
         }
         if(!found) {
+            printf("fuck");
+            // exit(400);
+            return 1;
             current = visited[visited_count - 2];
             visited_count -= 2;
             continue;
@@ -313,6 +341,8 @@ void connect_doors() {
 void add_tools() {
     for(int i = 1; i < 5; i++) {
         g.tool_floor[i] = rand() % MAX_FLOORS;
+        if(rooms_count[g.tool_floor[i]] == 0)
+            continue;
         int ind = rand() % rooms_count[g.tool_floor[i]];
         int x = rand() % (rooms_arr[g.tool_floor[i]][ind].width - 2) + 1 + rooms_arr[g.tool_floor[i]][ind].x;
         int y = rand() % (rooms_arr[g.tool_floor[i]][ind].height - 1) + 1 + rooms_arr[g.tool_floor[i]][ind].y;
@@ -321,13 +351,16 @@ void add_tools() {
     }
 }
 void print_tools() {
+    attron(COLOR_PAIR(5));
     for(int i = 1; i < 5; i++) {
         if(active_floor != g.tool_floor[i])
             continue;
+        
         Pos temp = g.tool_location[i];
         if(temp.x != 0 && temp.y != 0 && (mvinch(temp.y, temp.x) & A_CHARTEXT) == '.')
             mvprintw(temp.y, temp.x, "%s", tools_icon[i]);
     }
+    attroff(COLOR_PAIR(5));
 }
 void add_enchant() 
 {
@@ -355,14 +388,20 @@ void add_enchant()
 }
 void print_enchants() {
     Pos temp = g.health_loc[active_floor];
+    attron(COLOR_PAIR(3));
     if(temp.x != 0 && temp.y != 0 && (mvinch(temp.y, temp.x) & A_CHARTEXT) == '.')
         mvprintw(temp.y, temp.x, "%s", enchant_icons[0]);
+    attroff(COLOR_PAIR(3));
     temp = g.speed_loc[active_floor];
+    attron(COLOR_PAIR(2));
     if(temp.x != 0 && temp.y != 0 && (mvinch(temp.y, temp.x) & A_CHARTEXT) == '.')
         mvprintw(temp.y, temp.x, "%s", enchant_icons[1]);
+    attroff(COLOR_PAIR(2));
     temp = g.damage_loc[active_floor];
+    attron(COLOR_PAIR(4));
     if(temp.x != 0 && temp.y != 0 && (mvinch(temp.y, temp.x) & A_CHARTEXT) == '.')
         mvprintw(temp.y, temp.x, "%s", enchant_icons[2]);
+    attroff(COLOR_PAIR(4));
 }
 
 void add_golds() {
@@ -378,18 +417,17 @@ void add_golds() {
 }
 void print_gold() {
     attron(COLOR_PAIR(12));
-    for(int i = 0; i < MAX_FLOORS; i++) {
-        for(int j = 0; j < 2; j++) {
-            if(g.gold_loc[i][j].y != 0 && g.gold_loc[i][j].x != 0)
-                mvprintw(g.gold_loc[i][j].y, g.gold_loc[i][j].x, "$");
-        }
+    for(int j = 0; j < 2; j++) {
+        if(g.gold_loc[active_floor][j].y != 0 && g.gold_loc[active_floor][j].x != 0 && 
+        (mvinch(g.gold_loc[active_floor][j].y, g.gold_loc[active_floor][j].x) & A_CHARTEXT) == '.')
+            mvprintw(g.gold_loc[active_floor][j].y, g.gold_loc[active_floor][j].x, "$");
     }
+    
     attroff(COLOR_PAIR(12));
     attron(COLOR_PAIR(7) | A_BOLD);
-    for(int i = 0; i < MAX_FLOORS; i++) {
-        if(g.gold_loc[i][2].y != 0 && g.gold_loc[i][2].x != 0)
-                mvprintw(g.gold_loc[i][2].y, g.gold_loc[i][2].x, "$");
-    }
+    if(g.gold_loc[active_floor][2].y != 0 && g.gold_loc[active_floor][2].x != 0 && 
+    (mvinch(g.gold_loc[active_floor][2].y, g.gold_loc[active_floor][2].x) & A_CHARTEXT) == '.')
+        mvprintw(g.gold_loc[active_floor][2].y, g.gold_loc[active_floor][2].x, "$");
     attroff(COLOR_PAIR(7) | A_BOLD);
     
 }
@@ -405,21 +443,47 @@ void add_foods() {
     }
 }
 void print_foods() {
-    for(int i = 0; i < MAX_FLOORS; i++) 
+    attron(COLOR_PAIR(3));
+    for(int j = 0; j < rooms_count[active_floor]; j++) 
     {
-        for(int j = 0; j < rooms_count[i]; j++) 
-        {
-            if(g.food_loc[i][j].y != 0 && g.food_loc[i][j].x)
-                mvprintw(g.food_loc[i][j].y, g.food_loc[i][j].x, "f");
-        }
+        if(g.food_loc[active_floor][j].y != 0 && g.food_loc[active_floor][j].x != 0 && 
+        (mvinch(g.food_loc[active_floor][j].y, g.food_loc[active_floor][j].x) & A_CHARTEXT) == '.')
+            mvprintw(g.food_loc[active_floor][j].y, g.food_loc[active_floor][j].x, "f");
     }
+    attroff(COLOR_PAIR(3));
+
 }
 
 void print_elements() 
 {
-    
+    print_foods();
+    print_gold();
+    print_enchants();
+    print_tools();
 }
-
+void print_treasure() {
+    if(active_floor == MAX_FLOORS - 1 && mvinch(g.treasure.y, g.treasure.x) != ' ') {
+        attron(COLOR_PAIR(12));
+        Room temp = g.treasure;
+        for(int j = temp.x; j <= temp.x + temp.width; j++) {
+            for(int k = temp.y; k <= temp.y + temp.height; k++) {
+                if(k == temp.y || k == temp.y + temp.height)
+                    mvaddch(k, j, ACS_HLINE);
+                else if(j == temp.x || j == temp.x + temp.width)
+                    mvaddch(k, j, ACS_VLINE);
+                else
+                    mvaddch(k, j, '.');
+            }
+        }
+        mvaddch(temp.y, temp.x, ACS_ULCORNER);
+        mvaddch(temp.y, temp.x + temp.width, ACS_URCORNER);
+        mvaddch(temp.y + temp.height, temp.x, ACS_LLCORNER);
+        mvaddch(temp.y + temp.height, temp.x + temp.width, ACS_LRCORNER);
+        for(int j = 0; j < temp.door_num || temp.door_wall[j] == -1; j++) {
+            mvaddch(temp.y + temp.doors[j].y, temp.x + temp.doors[j].x, '+');
+        }
+    }
+}
 void generate_floor() {
     floors_arr = active_user->floors_arr;
     // memset(floors_arr[active_floor].rooms_arr, 0, MAX_ROOMS * sizeof(Room));
@@ -431,11 +495,17 @@ void generate_floor() {
         rooms_count[active_floor]++;
     }
     while(rooms_count[active_floor] < 6 || counter < 20) {
+        if(counter > 10000)
+            exit(200);
         counter++;
         generate_room();
     }
     if(active_floor > 0) {
         active_user->ladders[active_floor][0] = active_user->ladders[active_floor - 1][1];
+    }
+    if(active_floor == MAX_FLOORS - 1){
+        active_user->last_game.treasure = rooms_arr[active_floor][rooms_count[active_floor] - 1];
+        g.treasure = rooms_arr[active_floor][rooms_count[active_floor] - 1];
     }
     if(active_floor < MAX_FLOORS - 1 && active_floor != 0) {
         ladder_room = rooms_arr[active_floor][rooms_count[active_floor] - 1];
@@ -472,8 +542,23 @@ void print_message_box() {
     attroff(COLOR_PAIR(12));
     attron(COLOR_PAIR(6) | A_BOLD);
     mvprintw(1, COLS - 13, "Golds : %d ", g.gold);
-    mvprintw(1, 0, "Health : %d %% hunger : %d %% foods in inventory: %d", g.health, g.hunger, g.food);
+    // mvprintw(1, 0, "Health : %d %% hunger : %d %% foods in inventory: %d", g.health, g.hunger, g.food);
     attroff(COLOR_PAIR(6) | A_BOLD);
+    mvprintw(1, 0, "\u2764 \u2764 \u2764 \u2764 \u2764 \u2764 \u2764 \u2764 \u2764 \u2764");
+    // mvprintw(1, 30, "\U0001F34E \U0001F34E \U0001F34E \U0001F34E \U0001F34E \U0001F34E \U0001F34E \U0001F34E \U0001F34E \U0001F34E");
+
+    attron(COLOR_PAIR(3));
+    for(int i = 0; i < 10; i++) {
+        if(10 * i < g.health) {
+            mvprintw(1, 2 * i, "\u2764");
+        }
+        if((10 * i) < 100 - g.hunger) {
+            mvprintw(1, 30 + 3 * i, "\U0001F34E");
+        }
+    }
+    
+    attroff(COLOR_PAIR(3));
+
 
 }
 void print_floor() {
@@ -484,7 +569,7 @@ void print_floor() {
     print_message_box();
     draw_hallway();
     print_rooms(is_visible);
-
+    print_elements();
 }
 void check_hallway(int i, int j, Pos player) {
     Pos hallway = floors_arr[active_floor].hallways[i][j];
@@ -509,6 +594,179 @@ void draw_hallway() {
         }
     }
 }
+int handle_parameters() {
+    g.hunger += active_user->difficulty + 1;
+        if(g.hunger >= 100) {
+            g.hunger = 100;
+            g.health -= 2;
+        }
+        if(g.health <= 0)
+            return 1;
+        if(g.hunger <= 20) {
+            g.health += 4;
+        }
+        if(g.hunger < 0) {
+            g.hunger = 0;
+        }
+        if(g.health > 100) g.health = 100;
+        return 0;
+}
+int handle_pickup(int ch, Pos p) {
+    /*Normal Gold*/
+    // mvprintw(0, 0, "%x - %x", ch, (*(enchant_icons[0])) | COLOR_PAIR(3));
+    int input;
+    if(ch == ('$' | COLOR_PAIR(12))) 
+    {
+        g.gold += 1;
+        print_message_box();
+        message("You Found Gold", COLOR_PAIR(12) | A_BLINK);
+        for(int i = 0; i < 2; i++){
+            if(g.gold_loc[active_floor][i].x == p.x && g.gold_loc[active_floor][i].y == p.y) {
+                g.gold_loc[active_floor][i].x = 0;
+                g.gold_loc[active_floor][i].y = 0;
+                return 0;
+            }
+        }
+        refresh();
+    } /*Black gold*/
+    else if(ch == ('$' | COLOR_PAIR(7) | A_BOLD)) {
+        g.gold += 3;
+        print_message_box();
+        message("You Found Dark Gold!!", COLOR_PAIR(12) | A_BLINK);
+        g.gold_loc[active_floor][2].x = 0;
+        g.gold_loc[active_floor][2].y = 0;
+    }
+    /*Foods*/
+    else if(ch == ('f' | COLOR_PAIR(3))) {
+        message("Press 'p' to pick up the food or other key to continue", COLOR_PAIR(12) | A_BLINK);
+        input = getch();
+        if(input == 'p' || input == 'P') {
+            for(int i = 0; i < rooms_count[active_floor]; i++) {
+                if(g.food_loc[active_floor][i].x == p.x && g.food_loc[active_floor][i].y == p.y) {
+                    g.food_loc[active_floor][i].x = 0;
+                    g.food_loc[active_floor][i].y = 0;
+                    g.food++;
+                    print_message_box();
+                    message("You picked up a food", COLOR_PAIR(12));
+                    return 0;
+                }
+            }
+        }
+    }
+    else 
+    {
+        /*tools*/
+        for (int i = 1; i < 5; i++) {
+            if(g.tool_floor[i] == active_floor && g.tool_location[i].x == p.x && g.tool_location[i].y == p.y)
+            {
+                char * s = malloc(200 * sizeof(char));
+                sprintf(s, "You found %s ! Press p to pick it up or any key to continue!", tools_name[i]);
+                message(s, COLOR_PAIR(1));
+                s[0] = 0;
+                input = getch();
+                if(input == 'p' || input == 'P') {
+                    g.tool_location[i].x = 0;
+                    g.tool_location[i].y = 0;
+                    g.tools[i] = 1;
+                    sprintf(s, "You found %s ! Press p to pick it up or any key to continue!", tools_name[i]);
+
+                    print_message_box();
+                    message("You picked up %s", COLOR_PAIR(12));
+                    free(s);
+                    return 0;
+                }
+                free(s);
+                return 0;
+
+            }
+        }
+        /*enchants*/
+        if(g.health_loc[active_floor].x == p.x && g.health_loc[active_floor].y == p.y)
+        { /*Health*/
+            message("You found Health enchant! press 'p' to pick it up or any key to continue!", COLOR_PAIR(1));
+            input = getch();
+            if(input == 'p' || input == 'P') {
+                g.health_loc[active_floor].x = 0;
+                g.health_loc[active_floor].y = 0;
+                g.health_count++;
+
+                print_message_box();
+                message("You picked up health enchant", COLOR_PAIR(12));
+
+            }
+        }
+        else if(g.speed_loc[active_floor].x == p.x && g.speed_loc[active_floor].y == p.y)
+        { /*Speed*/
+            message("You found Speed enchant! press 'p' to pick it up or any key to continue!", COLOR_PAIR(1));
+            input = getch();
+        }
+        else if(g.damage_loc[active_floor].x == p.x && g.damage_loc[active_floor].y == p.y)
+        {/*Damage*/
+            message("You found Damage enchant! press 'p' to pick it up or any key to continue!", COLOR_PAIR(1));
+            input = getch();
+        }
+
+
+    }
+
+
+
+
+
+
+
+}
+
+
+int init_game() {
+    g = active_user->last_game;
+    
+    int temp = active_user->active_floor;
+    active_floor = 0;
+    while(active_floor < MAX_FLOORS) 
+    {
+        print_floor();
+        active_floor++;
+    }
+    active_floor = temp;
+    add_tools();
+    add_golds();
+    add_foods();
+    add_enchant();
+    active_user->last_game = g;
+    return 0;
+}
+
+int resume_game() {
+    g = active_user->last_game;
+    if(active_user->floors_arr[0].rooms_count == 0)
+    {
+        return 404;
+    }
+    clear();
+    print_floor();
+    refresh();
+    int val = player_movement();
+    if (val == 1)
+
+    if(val == 27)
+        active_user->last_game = g;
+}
+
+int is_in_room(Pos p) {
+    for(int i = 0; i < rooms_count[active_floor]; i++) {
+        Room temp = rooms_arr[active_floor][i];
+        // if(p.x >= temp.x && p.x  <= temp.x + temp.width && p.y >= temp.y && p.y <= temp.y + temp.height)
+        //     return -i - 1;
+        for(int j = 0; j < temp.door_num; j++ ) {
+            if(abs(p.x - (temp.x + temp.doors[j].x)) == 0 && abs(p.y - (temp.y + temp.doors[j].y)) == 0)
+                return -i - 2;
+            if(abs(p.x - (temp.x + temp.doors[j].x)) <= 2 && abs(p.y - (temp.y + temp.doors[j].y)) <= 2)
+                return i;
+        }
+    }
+    return -1;
+}
 
 int player_movement() {
     rooms_arr[0][0].visible = 1;
@@ -520,24 +778,35 @@ int player_movement() {
     attron(COLOR_PAIR(active_user->player_color));
     mvaddch(current->y, current->x, '@');
     attroff(COLOR_PAIR(active_user->player_color));
+    Pos check_pos = *current;
     refresh();
     int previos;
     int move = 0;
     // halfdelay(5);
     while(1) {
-        g.hunger += active_user->difficulty + 1;
-        if(g.hunger >= 100)
-            return 1;
+        
         int index = is_in_room(*current);
         if(index >= 0)
         {
             floors_arr[active_floor].rooms_arr[index].visible = 1;
             rooms_arr[active_floor][index].visible = 1;
         }
+        if(check_pos.x != current->x || check_pos.y != current->y) {
+            int val = handle_parameters();
+            if(val == 1) {
+                return 1;
+            }
+        }
         print_floor();
         attron(COLOR_PAIR(active_user->player_color));
         mvaddch(current->y, current->x, '@');
         attroff(COLOR_PAIR(active_user->player_color));
+        handle_pickup(active_user->under_ch, *current);
+        // print_floor();
+        // attron(COLOR_PAIR(active_user->player_color));
+        // mvaddch(current->y, current->x, '@');
+        // attroff(COLOR_PAIR(active_user->player_color));
+        check_pos = *current;
         if(index < -1 && (previos & A_CHARTEXT) == '#') {
             message("You Entered a room (press any KEY to continue!)", COLOR_PAIR(12) | A_BLINK | A_BOLD);
             // cbreak();
@@ -573,7 +842,7 @@ int player_movement() {
             if((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
-            (next_ch & A_CHARTEXT) != ' ')
+            next_ch != ' ')
             {
                 mvaddch(current->y, current->x, active_user->under_ch);
                 current->y--;
@@ -590,7 +859,7 @@ int player_movement() {
             if((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
-            (next_ch & A_CHARTEXT) != ' ')
+            next_ch != ' ')
             {
                 mvaddch(current->y, current->x, active_user->under_ch);
                 current->x--;
@@ -606,7 +875,7 @@ int player_movement() {
             if((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
-            (next_ch & A_CHARTEXT) != ' ')
+            next_ch != ' ')
             {
                 mvaddch(current->y, current->x, active_user->under_ch);
                 current->y++;
@@ -622,7 +891,7 @@ int player_movement() {
             if((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
-            (next_ch & A_CHARTEXT) != ' ')
+            next_ch != ' ')
             {
                 mvaddch(current->y, current->x, active_user->under_ch);
                 current->x++;
@@ -639,7 +908,7 @@ int player_movement() {
             if((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
-            (next_ch & A_CHARTEXT) != ' ')
+            next_ch != ' ')
             {
                 mvaddch(current->y, current->x, active_user->under_ch);
                 current->x--;
@@ -656,7 +925,7 @@ int player_movement() {
             if((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
-            (next_ch & A_CHARTEXT) != ' ')
+            next_ch != ' ')
             {
                 mvaddch(current->y, current->x, active_user->under_ch);
                 current->x++;
@@ -673,7 +942,7 @@ int player_movement() {
             if((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
-            (next_ch & A_CHARTEXT) != ' ')
+            next_ch != ' ')
             {
                 mvaddch(current->y, current->x, active_user->under_ch);
                 current->x--;
@@ -690,7 +959,7 @@ int player_movement() {
             if((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
-            (next_ch & A_CHARTEXT) != ' ')
+            next_ch != ' ')
             {
                 mvaddch(current->y, current->x, active_user->under_ch);
                 current->x++;
@@ -709,7 +978,7 @@ int player_movement() {
             while((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
-            (next_ch & A_CHARTEXT) != ' ')
+            next_ch != ' ')
             {   
 
                 mvaddch(current->y, current->x, active_user->under_ch);
@@ -732,9 +1001,8 @@ int player_movement() {
             while((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
-            (next_ch & A_CHARTEXT) != ' ')
+            next_ch != ' ')
             {   
-
                 mvaddch(current->y, current->x, active_user->under_ch);
                 current->x;
                 current->y--;
@@ -755,7 +1023,7 @@ int player_movement() {
             while((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
-            (next_ch & A_CHARTEXT) != ' ')
+            next_ch != ' ')
             {   
 
                 mvaddch(current->y, current->x, active_user->under_ch);
@@ -778,9 +1046,9 @@ int player_movement() {
             while((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
-            (next_ch & A_CHARTEXT) != ' ')
+            next_ch != ' ')
             {   
-
+                
                 mvaddch(current->y, current->x, active_user->under_ch);
                 current->x++;
                 current->y;
@@ -820,39 +1088,4 @@ int player_movement() {
         refresh();
     }
     // cbreak();
-}
-
-int resume_game() {
-    g = active_user->last_game;
-    if(active_user->floors_arr[0].rooms_count == 0)
-    {
-        return 404;
-    }
-    print_floor();
-    add_tools();
-    add_golds();
-    add_foods();
-    clear();
-    print_floor();
-    refresh();
-    int val = player_movement();
-    if (val == 1)
-
-    if(val == 27)
-        active_user->last_game = g;
-}
-
-int is_in_room(Pos p) {
-    for(int i = 0; i < rooms_count[active_floor]; i++) {
-        Room temp = rooms_arr[active_floor][i];
-        // if(p.x >= temp.x && p.x  <= temp.x + temp.width && p.y >= temp.y && p.y <= temp.y + temp.height)
-        //     return -i - 1;
-        for(int j = 0; j < temp.door_num; j++ ) {
-            if(abs(p.x - (temp.x + temp.doors[j].x)) == 0 && abs(p.y - (temp.y + temp.doors[j].y)) == 0)
-                return -i - 2;
-            if(abs(p.x - (temp.x + temp.doors[j].x)) <= 2 && abs(p.y - (temp.y + temp.doors[j].y)) <= 2)
-                return i;
-        }
-    }
-    return -1;
 }
