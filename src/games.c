@@ -1019,20 +1019,29 @@ int player_movement() {
         }
         refresh();
         int ch = getch();
-        if(ch == ',' || ch == '<') {
+        if(ch == '1') {
+            food_menu();
+        }
+        else if(ch == '2') {
+
+        }
+        else if(ch == '3') {
+
+        }
+        else if(ch == ',' || ch == '<') {
             if((active_user->under_ch & A_CHARTEXT) == '<') {
             active_floor++;
             active_user->under_ch = ('>' | A_BOLD);
             print_floor();
             }
         }
-        if(ch == '.' || ch == '>') {
+        else if(ch == '.' || ch == '>') {
             if((active_user->under_ch & A_CHARTEXT) == '>') {
             active_floor--;
             active_user->under_ch = ('<' | A_BOLD);
             }
         }
-        if(ch == 'w' || ch == 'W') { /*move up*/
+        else if(ch == 'w' || ch == 'W') { /*move up*/
             int next_ch = mvinch(current->y - 1, current->x);
 
             if((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
@@ -1297,3 +1306,4 @@ int player_movement() {
     }
     // cbreak();
 }
+

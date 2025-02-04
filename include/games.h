@@ -9,7 +9,6 @@
 #include <math.h>
 #include <string.h>
 #include <stdint.h>
-#include "mymenu.h"
 
 #define MAX_ROOMS 20
 #define MAX_FLOORS 4
@@ -113,5 +112,8 @@ void print_elements();
 int init_game();
 void print_treasure();
 void clear_messageBox();
+int food_menu();
+int enchant_menu();
+int tool_menu();
 
 #endif

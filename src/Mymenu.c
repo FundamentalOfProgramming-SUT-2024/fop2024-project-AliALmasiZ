@@ -602,8 +602,9 @@ int food_menu() {
     sprintf(s[0], "Normal Food : %d", g.food[0] + g.food[3]);
     sprintf(s[1], "Speed Food : %d ", g.food[1]);
     sprintf(s[2], "Damage Food : %d", g.food[2]);
+    const char *test[] = {s[0], s[1], s[2]};
     
-    int choose = menu("Food Menu :", 5, s, 3);
+    int choose = menu("Food Menu :", 5, test, 3);
     for(int i = 0; i < 3; i++) {
         free(s[i]);
     }
@@ -625,8 +626,8 @@ int enchant_menu() {
     sprintf(s[0], "Health Enchant : %d", g.health_count);
     sprintf(s[1], "Speed Enchant : %d ", g.speed_count);
     sprintf(s[2], "Damage Enchant : %d", g.damage_count);
-    
-    int choose = menu("Enchant Menu :", 5, s, 3);
+    const char *test[] = {s[0], s[1], s[2]};
+    int choose = menu("Enchant Menu :", 5, test, 3);
     for(int i = 0; i < 3; i++) {
         free(s[i]);
     }
@@ -662,8 +663,8 @@ int tool_menu() {
     sprintf(s[2], "%s : %d", tools_name[2], g.tools[2]);
     sprintf(s[3], "%s : %d", tools_name[3], g.tools[3]);
     sprintf(s[4], "%s : %d", tools_name[4], g.tools[4]);
-    
-    int choose = menu("tools Menu :", 5, s, 5);
+    const char *test[] = {s[0], s[1], s[2], s[3], s[4]};
+    int choose = menu("tools Menu :", 5, test, 5);
     for(int i = 0; i < 5; i++) {
         free(s[i]);
     }
