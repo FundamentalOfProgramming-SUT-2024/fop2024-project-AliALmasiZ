@@ -8,6 +8,7 @@
 #include <time.h>
 #include "games.h"
 
+
 #define MAX_USERS 1000
 #define MAX_LEN 50
 

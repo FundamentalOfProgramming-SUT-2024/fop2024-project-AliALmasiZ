@@ -36,7 +36,7 @@ int main() {
     init_pair(7, COLOR_YELLOW, COLOR_BLACK);
     //----------------------------------------------
     const char *options[] = {"    Log in    ", "   Sign up    ", "Play as Guest ", "  Exit Game   "};
-    int choose = menu("Credit: Ali Almasi", 3, options, 4);
+    int choose = menu("Main menu :", 3, options, 4);
     while(1) {
         if (choose == 3) {
 

@@ -1,0 +1,90 @@
+#include "../include/enemies.h"
+
+void set_enemy_by_type(Enemy *e) {
+    switch (e->type)
+    {
+    case 0:
+        e->health = 5;
+        break;
+
+    case 1:
+        e->health = 10;
+        break;
+    case 2:
+        e->health = 15;
+        break;
+    case 3:
+        e->health = 20;
+        break;
+    case 4:
+        e->health = 30;
+        break;
+    default:
+        break;
+    }
+
+}
+void add_enemies () {
+    int ind[3];
+    int enemy[3];
+    for(int i = 0; i < MAX_FLOORS; i++) {
+        ind[0] = rand() % rooms_count[i];
+        do {
+            ind[1] = rand() % rooms_count[i];
+        } while(ind[1] != ind[0]);
+        do {
+            ind[2] = rand() % rooms_count[i];
+        } while(ind[2] != ind[0] && ind[2] != ind[1]);
+
+        enemy[0] = rand() % 5;
+        do {
+            enemy[1] = rand() % 5;
+        } while(enemy[1] != enemy[0]);
+        do {
+            enemy[2] = rand() % 5;
+        } while(enemy[2] != enemy[0] && enemy[2] != enemy[1]);
+        for(int j = 0; j < 3; j++) {
+            g.enemies[i][j].floor = i;
+            g.enemies[i][j].is_active = 0;
+            g.enemies[i][j].followed = 0;
+            g.enemies[i][j].room_ind = ind[j];
+            g.enemies[i][j].type = enemy[j];
+
+            int x = rand() % (rooms_arr[i][ind[j]].width - 1) + 1 + rooms_arr[i][ind[j]].x;
+            int y = rand() % (rooms_arr[i][ind[j]].height - 1) + 1 + rooms_arr[i][ind[j]].y;
+            Pos temp = {x, y};
+            g.enemies[i][j].position = temp;
+
+            set_enemy_by_type(&g.enemies[i][j]);
+        }
+    }
+}
+
+void move_enemy(Enemy *e) {
+    Pos p = active_user->position;
+    if(e->is_active) {
+        if(e->health <= 0) {
+            e->is_active = 0;
+            return;
+        }
+        switch (e->type)
+        {
+        case 0:
+        case 1:
+            break;
+        case 2:
+        default:
+            break;
+        }
+
+        
+    }
+}
+
+void move_enemies() {
+    Enemy *temp[3];
+    for(int i = 0; i < 3; i++) {
+        temp[i] = &g.enemies[active_floor][i];
+    }
+
+}

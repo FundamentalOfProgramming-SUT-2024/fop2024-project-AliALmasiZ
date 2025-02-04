@@ -9,6 +9,7 @@
 #include <math.h>
 #include <string.h>
 #include <stdint.h>
+#include "mymenu.h"
 
 #define MAX_ROOMS 20
 #define MAX_FLOORS 4
@@ -59,16 +60,16 @@ typedef struct Enemy {
     Pos position;
     uint8_t is_active : 1;
     uint8_t floor : 3;
-    uint8_t room_num : 5;
+    uint8_t followed : 3;
+    uint8_t room_ind : 5;
     uint8_t type : 3;
-    uint8_t health;
-    uint8_t damage;
+    int8_t health;
 
 } Enemy;
 typedef struct Game {
     uint16_t gold;
     int8_t health;
-    uint8_t food : 3;
+    uint8_t food[4];
     uint8_t active_tool : 3;
     uint8_t speed_count : 3;
     uint8_t damage_count : 3;
@@ -79,11 +80,14 @@ typedef struct Game {
     Pos tool_location[5];
     uint8_t tool_floor[5];
     Pos food_loc[MAX_FLOORS][MAX_ROOMS];
+    uint8_t food_type[MAX_FLOORS][MAX_ROOMS];
     Pos speed_loc[MAX_FLOORS];
     Pos damage_loc[MAX_FLOORS];
     Pos health_loc[MAX_FLOORS];
     Pos trap_loc[MAX_FLOORS];
     Room treasure;
+    Enemy enemies[MAX_FLOORS][3];
+
 
 } Game;
 
@@ -91,6 +95,7 @@ extern Room rooms_arr[MAX_FLOORS][MAX_ROOMS];
 extern int rooms_count[MAX_FLOORS];
 extern int active_floor;
 extern Game g;
+extern const char *tools_name[];
 
 int compare_distance(const void *a, const void *b);
 void generate_room();

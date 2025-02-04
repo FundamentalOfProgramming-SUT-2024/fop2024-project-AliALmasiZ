@@ -23,6 +23,9 @@ int scoreboard();
 int getstring(WINDOW* win, char* str, int n, int echo);
 char *random_password();
 int play_music(const char * path, int flag);
+int food_menu();
+int enchant_menu();
+int tool_menu();
 
 #endif
 

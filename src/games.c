@@ -9,6 +9,7 @@ int visited_count = 0;
 int is_visible = 0;
 Room ladder_room;
 Game g = {};
+// 宝;
 
 const char* Mace = "⚒"; // 0
 const char* Dagger = "\U0001F5E1"; // 1
@@ -22,10 +23,10 @@ const char* health_p = "\u2764";// 0 -> d
 const char* speed_p = "\u26A1"; // 1 
 const char* damage_p = "\u2620"; // 2 -> ' '
 const char* enchant_icons[] = {"\u2764", "s", "\u2620"};
-
+/*                                  Normal              Speed                Damage                Bad              */
 const int foods_icon[] = {'f' | COLOR_PAIR(3), 'f' | COLOR_PAIR(2), 'f' | COLOR_PAIR(4)};
 
-const int enemies_icon[] = {'D', 'F', 'G', 'S', 'U'};
+const int enemies_icon[] = {'D' | A_BOLD, 'F' | A_BOLD, 'G' | A_BOLD, 'S' | A_BOLD, 'U' | A_BOLD};
 
 void generate_room() {
 
@@ -454,6 +455,7 @@ void add_foods() {
             int y = rand() % (rooms_arr[i][j].height - 1) + 1 + rooms_arr[i][j].y;
             Pos temp = {x, y};
             g.food_loc[i][j] = temp;
+            g.food_type[i][j] = rand() % 4;
         }
     }
 }
@@ -463,11 +465,130 @@ void print_foods() {
     {
         if(g.food_loc[active_floor][j].y != 0 && g.food_loc[active_floor][j].x != 0 && 
         (mvinch(g.food_loc[active_floor][j].y, g.food_loc[active_floor][j].x) & A_CHARTEXT) == '.')
-            mvprintw(g.food_loc[active_floor][j].y, g.food_loc[active_floor][j].x, "f");
+            mvaddch(g.food_loc[active_floor][j].y, g.food_loc[active_floor][j].x, foods_icon[g.food_type[active_floor][j] % 3]);
     }
     attroff(COLOR_PAIR(3));
 
 }
+void set_enemy_by_type(Enemy *e) {
+    switch (e->type)
+    {
+    case 0:
+        e->health = 5;
+        break;
+
+    case 1:
+        e->health = 10;
+        break;
+    case 2:
+        e->health = 15;
+        break;
+    case 3:
+        e->health = 20;
+        break;
+    case 4:
+        e->health = 30;
+        break;
+    default:
+        break;
+    }
+
+}
+void add_enemies () {
+    int ind[3];
+    int enemy[3];
+    for(int i = 0; i < MAX_FLOORS; i++) {
+        ind[0] = rand() % rooms_count[i];
+        do {
+            ind[1] = rand() % rooms_count[i];
+        } while(ind[1] == ind[0]);
+        do {
+            ind[2] = rand() % rooms_count[i];
+        } while(ind[2] == ind[0] || ind[2] == ind[1]);
+
+        enemy[0] = rand() % 5;
+        do {
+            enemy[1] = rand() % 5;
+        } while(enemy[1] == enemy[0]);
+        do {
+            enemy[2] = rand() % 5;
+        } while(enemy[2] == enemy[0] || enemy[2] == enemy[1]);
+        for(int j = 0; j < 3; j++) {
+            g.enemies[i][j].floor = i;
+            g.enemies[i][j].is_active = 0;
+            g.enemies[i][j].followed = 0;
+            g.enemies[i][j].room_ind = ind[j];
+            g.enemies[i][j].type = enemy[j];
+
+            int x = rand() % (rooms_arr[i][ind[j]].width - 2) + 2 + rooms_arr[i][ind[j]].x;
+            int y = rand() % (rooms_arr[i][ind[j]].height - 2) + 2 + rooms_arr[i][ind[j]].y;
+            Pos temp = {x, y};
+            g.enemies[i][j].position = temp;
+
+            set_enemy_by_type(&g.enemies[i][j]);
+        }
+    }
+}
+void print_enemy(Enemy e) {
+    if(e.health > 0 && mvinch(e.position.y, e.position.x) != ' ') {
+        mvaddch(e.position.y, e.position.x, enemies_icon[e.type]);
+    }
+
+}
+
+void move_enemy(Enemy *e) {
+    Pos p = active_user->position;
+
+    Pos *ep = &e->position;
+
+    int dx = (ep->x > p.x) ? -1 : (ep->x < p.x) ? 1 : 0;
+    int dy = (ep->y > p.y) ? -1 : (ep->y < p.y) ? 1 : 0;
+
+    int chy = mvinch(ep->y + dy, ep->x);
+    int chx = mvinch(ep->y, ep->x + dx);
+    if (chx != (ACS_VLINE | A_BOLD) && chx != (ACS_HLINE | A_BOLD) && chx != ' ' && chx != ('+' | A_BOLD))
+        ep->x += dx;
+    if (chy != (ACS_VLINE | A_BOLD) && chy != (ACS_HLINE | A_BOLD) && chy != ' ' && chy != ('+' | A_BOLD))
+        ep->y += dy;
+    e->followed++;
+    // if(e->is_active) {
+    //     if(e->health <= 0) {
+    //         e->is_active = 0;
+    //         return;
+    //     }
+    //     switch (e->type)
+    //     {
+    //     case 0:
+    //     case 1:
+    //         break;
+    //     case 2:
+    //         if(e->followed)
+    //     default:
+    //         break;
+    //     }
+
+        
+    // }
+}
+
+void move_enemies() {
+    for(int i = 0; i < 3; i++) {
+        if(g.enemies[active_floor][i].is_active == 1) {
+            if(g.enemies[active_floor][i].health <= 0)
+            {
+                g.enemies[active_floor][i].is_active = 0;
+                g.enemies[active_floor][i].position.x = 0;
+                g.enemies[active_floor][i].position.y = 0;
+            } else
+            {
+                move_enemy(&g.enemies[active_floor][i]);
+            }
+        }
+        print_enemy(g.enemies[active_floor][i]);
+        // temp[i] = &g.enemies[active_floor][i];
+    }
+}
+
 
 void print_elements() 
 {
@@ -475,7 +596,8 @@ void print_elements()
     print_gold();
     print_enchants();
     print_tools();
-    print_treasure();
+    // print_treasure();
+    move_enemies();
 }
 int is_inRoom(Room r, Pos p) {
     return (p.x > r.x && p.x < r.x + r.width && p.y > r.y && p.y < r.y + r.height);
@@ -679,9 +801,14 @@ int handle_pickup(int ch, Pos p) {
         if(input == 'p' || input == 'P') {
             for(int i = 0; i < rooms_count[active_floor]; i++) {
                 if(g.food_loc[active_floor][i].x == p.x && g.food_loc[active_floor][i].y == p.y) {
+                    if(g.food[0] + g.food[1] + g.food[2] + g.food[3] == 5) {
+                        print_message_box();
+                        message("Your food inventory is full!", COLOR_PAIR(3) | A_BLINK);
+                        return 0;
+                    }
                     g.food_loc[active_floor][i].x = 0;
                     g.food_loc[active_floor][i].y = 0;
-                    g.food++;
+                    g.food[g.food_type[active_floor][i]]++;
                     print_message_box();
                     message("You picked up a food", COLOR_PAIR(12));
                     return 0;
@@ -791,6 +918,7 @@ int init_game() {
     add_foods();
     add_enchant();
     add_traps();
+    add_enemies();
     active_user->last_game = g;
     return 0;
 }
@@ -805,10 +933,20 @@ int resume_game() {
     print_floor();
     refresh();
     int val = player_movement();
-    if (val == 1)
+    if (val == 1 && val == 0) { /*losing is disabled*/
+        active_user->games_count++;
+        active_user->gold += g.gold;
+        active_user->score += active_floor * 10 + g.gold + (g.health_count + g.speed_count + g.damage_count) * 3 +
+        (g.tools[1] + g.tools[2] + g.tools[3] + g.tools[4]) * 5;
+        Game temp = {0};
+        memset(&active_user->floors_arr, 0, sizeof(Floor) * MAX_FLOORS);
+        active_user->last_game = temp;
+        return val;
+    }
 
-    if(val == 27)
+    else if(val == 27)
         active_user->last_game = g;
+    active_user->last_game = g;
 }
 
 int is_in_rooms(Pos p) {
@@ -900,7 +1038,8 @@ int player_movement() {
             if((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
-            next_ch != ' ')
+            next_ch != ' ' && next_ch != enemies_icon[0] && next_ch != enemies_icon[1] && next_ch != enemies_icon[2] && 
+            next_ch != enemies_icon[2] && next_ch != enemies_icon[3] && next_ch != enemies_icon[4])
             {
                 mvaddch(current->y, current->x, active_user->under_ch);
                 current->y--;
@@ -917,7 +1056,8 @@ int player_movement() {
             if((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
-            next_ch != ' ')
+            next_ch != ' ' && next_ch != enemies_icon[0] && next_ch != enemies_icon[1] && next_ch != enemies_icon[2] && 
+            next_ch != enemies_icon[2] && next_ch != enemies_icon[3] && next_ch != enemies_icon[4])
             {
                 mvaddch(current->y, current->x, active_user->under_ch);
                 current->x--;
@@ -933,7 +1073,8 @@ int player_movement() {
             if((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
-            next_ch != ' ')
+            next_ch != ' ' && next_ch != enemies_icon[0] && next_ch != enemies_icon[1] && next_ch != enemies_icon[2] && 
+            next_ch != enemies_icon[2] && next_ch != enemies_icon[3] && next_ch != enemies_icon[4])
             {
                 mvaddch(current->y, current->x, active_user->under_ch);
                 current->y++;
@@ -949,7 +1090,8 @@ int player_movement() {
             if((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
-            next_ch != ' ')
+            next_ch != ' ' && next_ch != enemies_icon[0] && next_ch != enemies_icon[1] && next_ch != enemies_icon[2] && 
+            next_ch != enemies_icon[2] && next_ch != enemies_icon[3] && next_ch != enemies_icon[4])
             {
                 mvaddch(current->y, current->x, active_user->under_ch);
                 current->x++;
@@ -966,7 +1108,8 @@ int player_movement() {
             if((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
-            next_ch != ' ')
+            next_ch != ' ' && next_ch != enemies_icon[0] && next_ch != enemies_icon[1] && next_ch != enemies_icon[2] && 
+            next_ch != enemies_icon[2] && next_ch != enemies_icon[3] && next_ch != enemies_icon[4])
             {
                 mvaddch(current->y, current->x, active_user->under_ch);
                 current->x--;
@@ -983,7 +1126,8 @@ int player_movement() {
             if((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
-            next_ch != ' ')
+            next_ch != ' ' && next_ch != enemies_icon[0] && next_ch != enemies_icon[1] && next_ch != enemies_icon[2] && 
+            next_ch != enemies_icon[2] && next_ch != enemies_icon[3] && next_ch != enemies_icon[4])
             {
                 mvaddch(current->y, current->x, active_user->under_ch);
                 current->x++;
@@ -1000,7 +1144,8 @@ int player_movement() {
             if((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
-            next_ch != ' ')
+            next_ch != ' ' && next_ch != enemies_icon[0] && next_ch != enemies_icon[1] && next_ch != enemies_icon[2] && 
+            next_ch != enemies_icon[2] && next_ch != enemies_icon[3] && next_ch != enemies_icon[4])
             {
                 mvaddch(current->y, current->x, active_user->under_ch);
                 current->x--;
@@ -1017,7 +1162,8 @@ int player_movement() {
             if((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
-            next_ch != ' ')
+            next_ch != ' ' && next_ch != enemies_icon[0] && next_ch != enemies_icon[1] && next_ch != enemies_icon[2] && 
+            next_ch != enemies_icon[2] && next_ch != enemies_icon[3] && next_ch != enemies_icon[4])
             {
                 mvaddch(current->y, current->x, active_user->under_ch);
                 current->x++;
@@ -1036,7 +1182,8 @@ int player_movement() {
             while((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
-            next_ch != ' ')
+            next_ch != ' ' && next_ch != enemies_icon[0] && next_ch != enemies_icon[1] && next_ch != enemies_icon[2] && 
+            next_ch != enemies_icon[2] && next_ch != enemies_icon[3] && next_ch != enemies_icon[4])
             {   
 
                 mvaddch(current->y, current->x, active_user->under_ch);
@@ -1059,7 +1206,8 @@ int player_movement() {
             while((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
-            next_ch != ' ')
+            next_ch != ' ' && next_ch != enemies_icon[0] && next_ch != enemies_icon[1] && next_ch != enemies_icon[2] && 
+            next_ch != enemies_icon[2] && next_ch != enemies_icon[3] && next_ch != enemies_icon[4])
             {   
                 mvaddch(current->y, current->x, active_user->under_ch);
                 current->x;
@@ -1081,7 +1229,8 @@ int player_movement() {
             while((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
-            next_ch != ' ')
+            next_ch != ' ' && next_ch != enemies_icon[0] && next_ch != enemies_icon[1] && next_ch != enemies_icon[2] && 
+            next_ch != enemies_icon[2] && next_ch != enemies_icon[3] && next_ch != enemies_icon[4])
             {   
 
                 mvaddch(current->y, current->x, active_user->under_ch);
@@ -1104,7 +1253,8 @@ int player_movement() {
             while((next_ch & A_CHARTEXT) != (ACS_ULCORNER & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_URCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_LLCORNER & A_CHARTEXT) &&  (next_ch & A_CHARTEXT) != (ACS_LRCORNER & A_CHARTEXT) &&
             (next_ch & A_CHARTEXT) != (ACS_HLINE & A_CHARTEXT) && (next_ch & A_CHARTEXT) != (ACS_VLINE & A_CHARTEXT) &&
-            next_ch != ' ')
+            next_ch != ' ' && next_ch != enemies_icon[0] && next_ch != enemies_icon[1] && next_ch != enemies_icon[2] && 
+            next_ch != enemies_icon[2] && next_ch != enemies_icon[3] && next_ch != enemies_icon[4])
             {   
                 
                 mvaddch(current->y, current->x, active_user->under_ch);

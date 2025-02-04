@@ -293,7 +293,7 @@ int login_menu(Users **arr, int n) {
 }
 
 int pregame_menu() {
-    const char *options[] = {" New Game  ", "Resume Game", "ScoreBoard ", " Settings  ", "Profile"};
+    const char *options[] = {" New Game  ", "Resume Game", "ScoreBoard ", " Settings  ", "  Profile  "};
     int choose = menu("PreGame menu ", 6, options, 5);
     while (1){
         if(choose == 0) {
@@ -592,4 +592,90 @@ int play_music(const char *path, int flag) {
     Mix_VolumeMusic(50);
     
     return 0;
+}
+
+int food_menu() {
+    char **s = (char **)malloc(3 * sizeof(char *));
+    for(int i = 0; i < 3; i++) {
+        s[i] = (char *)calloc(200, sizeof(char));
+    }
+    sprintf(s[0], "Normal Food : %d", g.food[0] + g.food[3]);
+    sprintf(s[1], "Speed Food : %d ", g.food[1]);
+    sprintf(s[2], "Damage Food : %d", g.food[2]);
+    
+    int choose = menu("Food Menu :", 5, s, 3);
+    for(int i = 0; i < 3; i++) {
+        free(s[i]);
+    }
+    free(s);
+    if (choose > 3 || choose < 0)
+    {
+        return 27;
+    }
+    else {
+        return choose;
+    }
+}
+
+int enchant_menu() {
+    char **s = (char **)malloc(3 * sizeof(char *));
+    for(int i = 0; i < 3; i++) {
+        s[i] = (char *)calloc(200, sizeof(char));
+    }
+    sprintf(s[0], "Health Enchant : %d", g.health_count);
+    sprintf(s[1], "Speed Enchant : %d ", g.speed_count);
+    sprintf(s[2], "Damage Enchant : %d", g.damage_count);
+    
+    int choose = menu("Enchant Menu :", 5, s, 3);
+    for(int i = 0; i < 3; i++) {
+        free(s[i]);
+    }
+    free(s);
+    if (choose > 3 || choose < 0)
+    {
+        return 27;
+    }
+    else if(choose == 0) {
+        if(g.health_count == 0) return 100;
+        return choose;        
+    }
+    else if(choose == 1) {
+        if(g.speed_count == 0) return 100;
+        return choose;
+    }
+    else if(choose == 2) {
+        if(g.damage_count == 0) return 100;
+        return choose;        
+    }
+    else {
+        return 27;
+    }
+}
+
+int tool_menu() {
+    char **s = (char **)malloc(5 * sizeof(char *));
+    for(int i = 0; i < 5; i++) {
+        s[i] = (char *)calloc(200, sizeof(char));
+    }
+    sprintf(s[0], "%s : %d", tools_name[0], g.tools[0]);
+    sprintf(s[1], "%s : %d ", tools_name[1], g.tools[1]);
+    sprintf(s[2], "%s : %d", tools_name[2], g.tools[2]);
+    sprintf(s[3], "%s : %d", tools_name[3], g.tools[3]);
+    sprintf(s[4], "%s : %d", tools_name[4], g.tools[4]);
+    
+    int choose = menu("tools Menu :", 5, s, 5);
+    for(int i = 0; i < 5; i++) {
+        free(s[i]);
+    }
+    free(s);
+    if(choose < 0 || choose > 4) {
+        return 27;
+    }
+    else {
+        if(g.tools[choose] == 0) {
+            return 100;
+        }
+        return choose;
+    }
+
 }
