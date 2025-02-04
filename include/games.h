@@ -19,6 +19,7 @@
 
 
 #define message(s, attr) do {      \
+    clear_messageBox();         \
     attron((attr));         \
     mvprintw(0, 0, "%s", (s));      \
     attroff((attr));           \
@@ -54,7 +55,16 @@ typedef struct Floor
     uint8_t visible[MAX_ROOMS * 4][MAX_PATH];
 } Floor;
 
+typedef struct Enemy {
+    Pos position;
+    uint8_t is_active : 1;
+    uint8_t floor : 3;
+    uint8_t room_num : 5;
+    uint8_t type : 3;
+    uint8_t health;
+    uint8_t damage;
 
+} Enemy;
 typedef struct Game {
     uint16_t gold;
     int8_t health;
@@ -72,6 +82,7 @@ typedef struct Game {
     Pos speed_loc[MAX_FLOORS];
     Pos damage_loc[MAX_FLOORS];
     Pos health_loc[MAX_FLOORS];
+    Pos trap_loc[MAX_FLOORS];
     Room treasure;
 
 } Game;
@@ -92,8 +103,10 @@ void print_floor();
 void draw_hallway();
 int player_movement();
 int resume_game();
-int is_in_room(Pos p);
+int is_in_rooms(Pos p);
 void print_elements();
 int init_game();
+void print_treasure();
+void clear_messageBox();
 
 #endif

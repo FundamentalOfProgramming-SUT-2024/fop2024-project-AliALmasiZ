@@ -23,7 +23,9 @@ const char* speed_p = "\u26A1"; // 1
 const char* damage_p = "\u2620"; // 2 -> ' '
 const char* enchant_icons[] = {"\u2764", "s", "\u2620"};
 
+const int foods_icon[] = {'f' | COLOR_PAIR(3), 'f' | COLOR_PAIR(2), 'f' | COLOR_PAIR(4)};
 
+const int enemies_icon[] = {'D', 'F', 'G', 'S', 'U'};
 
 void generate_room() {
 
@@ -338,6 +340,18 @@ void connect_doors() {
         
     }
 }
+void add_traps() {
+    /*Traps are only at floor 3 [index 2]*/
+    for(int j = 0; j < rooms_count[MAX_FLOORS - 2]; j++) 
+        {
+            int x = rand() % (rooms_arr[MAX_FLOORS - 2][j].width - 2) + 1 + rooms_arr[MAX_FLOORS - 2][j].x;
+            int y = rand() % (rooms_arr[MAX_FLOORS - 2][j].height - 1) + 1 + rooms_arr[MAX_FLOORS - 2][j].y;
+            Pos temp = {x, y};
+            g.trap_loc[j]= temp;
+        }
+
+    
+}
 void add_tools() {
     for(int i = 1; i < 5; i++) {
         g.tool_floor[i] = rand() % MAX_FLOORS;
@@ -408,6 +422,7 @@ void add_golds() {
     for(int i = 0; i < MAX_FLOORS; i++) {
         for(int j = 0; j < 3; j++) {
             int ind = rand() % rooms_count[i];
+
             int x = rand() % (rooms_arr[i][ind].width - 2) + 1 + rooms_arr[i][ind].x;
             int y = rand() % (rooms_arr[i][ind].height - 1) + 1 + rooms_arr[i][ind].y;
             Pos temp = {x, y};
@@ -460,6 +475,10 @@ void print_elements()
     print_gold();
     print_enchants();
     print_tools();
+    print_treasure();
+}
+int is_inRoom(Room r, Pos p) {
+    return (p.x > r.x && p.x < r.x + r.width && p.y > r.y && p.y < r.y + r.height);
 }
 void print_treasure() {
     if(active_floor == MAX_FLOORS - 1 && mvinch(g.treasure.y, g.treasure.x) != ' ') {
@@ -482,6 +501,7 @@ void print_treasure() {
         for(int j = 0; j < temp.door_num || temp.door_wall[j] == -1; j++) {
             mvaddch(temp.y + temp.doors[j].y, temp.x + temp.doors[j].x, '+');
         }
+        attroff(COLOR_PAIR(12));
     }
 }
 void generate_floor() {
@@ -533,7 +553,11 @@ void generate_floor() {
     
 }
 
-
+void clear_messageBox() {
+    for(int i = 0; i < COLS; i++) {
+        mvaddch(0, i, ' ');
+    }
+}
 void print_message_box() {
     attron(COLOR_PAIR(12));
     for(int i = 0; i < COLS; i++) {
@@ -615,6 +639,18 @@ int handle_pickup(int ch, Pos p) {
     /*Normal Gold*/
     // mvprintw(0, 0, "%x - %x", ch, (*(enchant_icons[0])) | COLOR_PAIR(3));
     int input;
+    if(active_floor == MAX_FLOORS - 2) {
+        for(int i = 0; i < rooms_count[active_floor]; i++) {
+            if(g.trap_loc[i].x == p.x && g.trap_loc[i].y == p.y) {
+                g.trap_loc[i].x = 0;
+                g.trap_loc[i].y = 0;
+                g.health -= 10;
+                print_message_box();
+                message("You got in trap!", A_BLINK | COLOR_PAIR(3));
+                getch();
+            }
+        }
+    }
     if(ch == ('$' | COLOR_PAIR(12))) 
     {
         g.gold += 1;
@@ -691,19 +727,40 @@ int handle_pickup(int ch, Pos p) {
                 g.health_count++;
 
                 print_message_box();
-                message("You picked up health enchant", COLOR_PAIR(12));
+                message("You picked up Health enchant", COLOR_PAIR(12));
 
             }
+            return 0;
         }
         else if(g.speed_loc[active_floor].x == p.x && g.speed_loc[active_floor].y == p.y)
         { /*Speed*/
             message("You found Speed enchant! press 'p' to pick it up or any key to continue!", COLOR_PAIR(1));
             input = getch();
+            if(input == 'p' || input == 'P') {
+                g.speed_loc[active_floor].x = 0;
+                g.speed_loc[active_floor].y = 0;
+                g.speed_count++;
+
+                print_message_box();
+                message("You picked up Speed enchant", COLOR_PAIR(12));
+
+            }
+            return 0;
         }
         else if(g.damage_loc[active_floor].x == p.x && g.damage_loc[active_floor].y == p.y)
         {/*Damage*/
             message("You found Damage enchant! press 'p' to pick it up or any key to continue!", COLOR_PAIR(1));
             input = getch();
+            if(input == 'p' || input == 'P') {
+                g.damage_loc[active_floor].x = 0;
+                g.damage_loc[active_floor].y = 0;
+                g.damage_count++;
+
+                print_message_box();
+                message("You picked up Damage enchant", COLOR_PAIR(12));
+
+            }
+            return 0;
         }
 
 
@@ -733,6 +790,7 @@ int init_game() {
     add_golds();
     add_foods();
     add_enchant();
+    add_traps();
     active_user->last_game = g;
     return 0;
 }
@@ -753,7 +811,7 @@ int resume_game() {
         active_user->last_game = g;
 }
 
-int is_in_room(Pos p) {
+int is_in_rooms(Pos p) {
     for(int i = 0; i < rooms_count[active_floor]; i++) {
         Room temp = rooms_arr[active_floor][i];
         // if(p.x >= temp.x && p.x  <= temp.x + temp.width && p.y >= temp.y && p.y <= temp.y + temp.height)
@@ -785,7 +843,7 @@ int player_movement() {
     // halfdelay(5);
     while(1) {
         
-        int index = is_in_room(*current);
+        int index = is_in_rooms(*current);
         if(index >= 0)
         {
             floors_arr[active_floor].rooms_arr[index].visible = 1;
@@ -989,7 +1047,7 @@ int player_movement() {
                 attroff(COLOR_PAIR(active_user->player_color));
                 active_user->under_ch = next_ch;
                 next_ch = mvinch(current->y, current->x - 1);
-                index = is_in_room(*current);
+                index = is_in_rooms(*current);
                 if(index >= 0)
                     floors_arr[active_floor].rooms_arr[index].visible = 1;                
                 print_floor();              
@@ -1011,7 +1069,7 @@ int player_movement() {
                 attroff(COLOR_PAIR(active_user->player_color));
                 active_user->under_ch = next_ch;
                 next_ch = mvinch(current->y - 1, current->x);
-                index = is_in_room(*current);
+                index = is_in_rooms(*current);
                 if(index >= 0)
                     floors_arr[active_floor].rooms_arr[index].visible = 1;                
                 print_floor();              
@@ -1034,7 +1092,7 @@ int player_movement() {
                 attroff(COLOR_PAIR(active_user->player_color));
                 active_user->under_ch = next_ch;
                 next_ch = mvinch(current->y + 1, current->x);
-                index = is_in_room(*current);
+                index = is_in_rooms(*current);
                 if(index >= 0)
                     floors_arr[active_floor].rooms_arr[index].visible = 1;                
                 print_floor();              
@@ -1057,7 +1115,7 @@ int player_movement() {
                 attroff(COLOR_PAIR(active_user->player_color));
                 active_user->under_ch = next_ch;
                 next_ch = mvinch(current->y, current->x + 1);  
-                index = is_in_room(*current);
+                index = is_in_rooms(*current);
                 if(index >= 0)
                     floors_arr[active_floor].rooms_arr[index].visible = 1;
                 print_floor();              

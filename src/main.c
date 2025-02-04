@@ -5,6 +5,8 @@ Users *arr;
 int users_count = 0;
 int main() {
     Users temp_user;
+    temp_user.start_time = time(NULL);
+    strcpy(temp_user.username, "Guest User");
     srand(time(NULL));
     arr = calloc(MAX_USERS, sizeof(Users));
     users_count = load_users(&arr);

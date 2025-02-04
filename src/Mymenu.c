@@ -38,9 +38,11 @@ int menu(char* message, int color, const char **options, int size) {
     int passchecker = 0;
     while(true) {
         clear();
-        if(LINES < 20 || COLS < 40) {
-            delwin(menu_win);
-            return 400;
+        while(LINES < 35 || COLS < 60) {
+            clear();
+            mvprintw(LINES / 2, (COLS - 41) / 2, "The Window is too Small! make it bigger!");
+            refresh();
+            sleep(1);
         }
         start_y = (LINES - win_height - 7) / 2 + 7;
         start_x = (COLS - win_width) / 2 ;
@@ -291,8 +293,8 @@ int login_menu(Users **arr, int n) {
 }
 
 int pregame_menu() {
-    const char *options[] = {" New Game  ", "Resume Game", "ScoreBoard ", " Settings  "};
-    int choose = menu("PreGame menu ", 6, options, 4);
+    const char *options[] = {" New Game  ", "Resume Game", "ScoreBoard ", " Settings  ", "Profile"};
+    int choose = menu("PreGame menu ", 6, options, 5);
     while (1){
         if(choose == 0) {
             active_floor = 0;
@@ -320,18 +322,18 @@ int pregame_menu() {
             active_user->under_ch = mvinch(active_user->position.x, active_user->position.y);
             init_game();
             resume_game();
-            choose = menu("PreGame menu ", 6, options, 4);
+            choose = menu("PreGame menu ", 6, options, 5);
         }
         else if(choose == 1) {
             int val = resume_game();
             if(val == 404)
-                choose = menu("No Games Found!", 3, options, 4);
+                choose = menu("No Games Found!", 3, options, 5);
             else
-                choose = menu("PreGame menu ", 6, options, 4);
+                choose = menu("PreGame menu ", 6, options, 5);
         }
         else if(choose == 2) {
             scoreboard();
-            choose = menu("PreGame menu ", 6, options, 4);
+            choose = menu("PreGame menu ", 6, options, 5);
         }
         else if(choose == 3) {
             const char* settings[] = {"  difficulty  ", "  Hero color  ", "Music Setting "};
@@ -339,7 +341,10 @@ int pregame_menu() {
             if (val == 0) {
                 const char *diffs[] = {"Easy", "Meduim", "Hard"};
                 active_user->difficulty = menu("Select difficalty :", 6, diffs, 3);
-                choose = menu("Difficulty has been set!", 6, options, 4);
+                if(active_user->difficulty > 2) {
+                    active_user->difficulty = 0;
+                }
+                choose = menu("Difficulty has been set!", 6, options, 5);
             }
             else if(val == 1) {
                 const char* colors[] = {"White", "  Red  ", " Blue  ", "Magenta", "Yellow ", "Green"}; 
@@ -363,11 +368,11 @@ int pregame_menu() {
                 else if(color == 5) {
                     active_user->player_color = 2;
                 }
-                choose = menu("Player color has been set!", 6, options, 4);
+                choose = menu("Player color has been set!", 6, options, 5);
             }
             else if(val == 2) {
-                const char *m_settings[] = {"First music", "Second Music", "Music Off"};
-                int ms = menu("Select Music :", 3, m_settings, 3);
+                const char *m_settings[] = {"First music", "Second Music", "Third music", "Music Off"};
+                int ms = menu("Select Music :", 3, m_settings, 4);
                 
                 if(ms == 0) {
                     play_music("./music/first.mp3", 1);
@@ -376,12 +381,31 @@ int pregame_menu() {
                     
                     play_music("./music/second.mp3", 1);
                 }
-                else if (ms == 2 || ms == 27) {
+                else if(ms == 2) {
+                    play_music("./music/third.mp3", 1);
+                }
+
+                else if (ms == 3 || ms == 27) {
                     play_music("", 0);
                 } 
 
-                choose = menu("Music Settings have been set!", 6, options, 4);
+                choose = menu("Music Settings have been set!", 6, options, 5);
             }
+        }
+        else if(choose == 4) {
+            clear();
+            time_t current_time = time(NULL);
+            // mvprintw((LINES - 20) / 2 + (2 * i), (COLS - 77) / 3, "%d     |  |  |  | \n", index + 1 , , , , , ());
+            mvprintw((LINES) / 2 - 2, (COLS - 16) / 2, "Username :  %s ", active_user->username);
+            mvprintw((LINES) / 2 - 1, (COLS - 16) / 2, "TotalScore : %d ", active_user->score);
+            mvprintw((LINES) / 2, (COLS - 16) / 2, "TotalGold : %d ", active_user->gold);
+            mvprintw((LINES) / 2 + 1, (COLS - 16) / 2, "TotalGames : %d", active_user->games_count);
+            mvprintw((LINES) / 2 + 2, (COLS - 16) / 2, "Experience %ld", current_time - active_user->start_time);
+            getch();
+
+            choose = menu("PreGame menu ", 6, options, 5);
+
+
         }
         else if (choose == -1) {
 
@@ -565,7 +589,7 @@ int play_music(const char *path, int flag) {
         return 1;
     }
 
-    Mix_VolumeMusic(120);
+    Mix_VolumeMusic(50);
     
     return 0;
 }
