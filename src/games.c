@@ -18,6 +18,7 @@ const char* Normal_arrow = "\u27B3"; // 3 -> -77
 const char* Sword = "\u2694"; // 4 -> -108
 const char *tools_icon[] = {"⚒", "d", "\u2695", "\u27B3", "\u2694"};
 const char *tools_name[] = {"Mace", "Dagger", "Magic Wand", "Normal arrow", "Sword"};
+const int tools_collect[] = {1, 10, 8, 20, 1};
 
 const char* health_p = "\u2764";// 0 -> d
 const char* speed_p = "\u26A1"; // 1 
@@ -295,7 +296,7 @@ int make_hallway(int start_x, int start_y, int end_x, int end_y) {
             }
         }
         if(!found) {
-            printf("fuck");
+            printf("err");
             // exit(400);
             return 1;
             current = visited[visited_count - 2];
@@ -307,7 +308,6 @@ int make_hallway(int start_x, int start_y, int end_x, int end_y) {
 }
 
 void connect_doors() {
-    int fuck = 0;
 
     qsort(rooms_arr[active_floor], rooms_count[active_floor], sizeof(Room), compare_distance);
     for (int i = 0; i < rooms_count[active_floor] - 1; i++) {
@@ -331,12 +331,10 @@ void connect_doors() {
             visited_count = 0;
             if(floors_arr == NULL)
                 printf("floors_arr unallocated!\n");
-            // attron(COLOR_PAIR((fuck) % 2 + 1));
             make_hallway(door1_x, door1_y, door2_x, door2_y);
             // memset(floors_arr[active_floor].hallways[3 * i + j], 0, MAX_PATH);
             memcpy(floors_arr[active_floor].hallways[3 * i + j], visited, visited_count * sizeof(Pos));
             floors_arr[active_floor].hallway_count[3 * i + j] = visited_count;
-            // attroff(COLOR_PAIR((fuck++) % 2 + 1));
         }
         
     }
@@ -546,9 +544,9 @@ void move_enemy(Enemy *e) {
 
     int chy = mvinch(ep->y + dy, ep->x);
     int chx = mvinch(ep->y, ep->x + dx);
-    if (chx != (ACS_VLINE | A_BOLD) && chx != (ACS_HLINE | A_BOLD) && chx != ' ' && chx != ('+' | A_BOLD))
+    if (chx != (ACS_VLINE | A_BOLD) && chx != (ACS_HLINE | A_BOLD) && chx != ' ' && chx != ('+' | A_BOLD) && chx != ('@' | COLOR_PAIR(active_user->player_color)))
         ep->x += dx;
-    if (chy != (ACS_VLINE | A_BOLD) && chy != (ACS_HLINE | A_BOLD) && chy != ' ' && chy != ('+' | A_BOLD))
+    if (chy != (ACS_VLINE | A_BOLD) && chy != (ACS_HLINE | A_BOLD) && chy != ' ' && chy != ('+' | A_BOLD) && mvinch(ep->y + dy, ep->x) != ('@' | COLOR_PAIR(active_user->player_color)))
         ep->y += dy;
     e->followed++;
     // if(e->is_active) {
@@ -570,23 +568,71 @@ void move_enemy(Enemy *e) {
         
     // }
 }
-
-void move_enemies() {
+int handle_damage(Enemy *en) {
+    Enemy e = *en;
+    if (abs(active_user->position.x - e.position.x) <= 1 && abs(active_user->position.y- e.position.y) <= 1) {
+        g.health -= (e.type + 1) * 2;
+        print_message_box();
+        if(g.health <= 0) {
+            return 1;
+        }
+        if(en->is_active == 0 && e.type == 4)
+            en->is_active = 1;
+        return 2;
+    }   
+    return 0;
+}
+int move_enemies() {
     for(int i = 0; i < 3; i++) {
         if(g.enemies[active_floor][i].is_active == 1) {
-            if(g.enemies[active_floor][i].health <= 0)
+            if((g.enemies[active_floor][i].type == 2 || g.enemies[active_floor][i].type == 4) && g.enemies[active_floor][i].followed >= 5) {
+
+            }
+            else if(g.enemies[active_floor][i].health <= 0)
             {
+                // message("1", A_BOLD);    
+                // refresh();
+                // getch();
                 g.enemies[active_floor][i].is_active = 0;
                 g.enemies[active_floor][i].position.x = 0;
                 g.enemies[active_floor][i].position.y = 0;
             } else
             {
+                // message("2", A_BOLD);
+                // refresh();
+                // getch();
                 move_enemy(&g.enemies[active_floor][i]);
+            }
+        }else {
+            if(g.enemies[active_floor][i].is_active == 0) {
+                // printf("%d - %d\n", g.enemies[active_floor][i].type, i);
+                // getch();
+                if ((g.enemies[active_floor][i].type == 2 || g.enemies[active_floor][i].type == 3)) {
+                    // message("3", A_BOLD);
+                    // refresh();
+                    // getch();
+                    for(int j = 0; j < rooms_count[active_floor]; j++) {
+                        if(is_inRoom(rooms_arr[active_floor][j], g.enemies[active_floor][i].position)) {
+                            if(is_inRoom(rooms_arr[active_floor][j], active_user->position)) {
+                                g.enemies[active_floor][i].is_active = 1;
+                            }
+                            break;
+                        }
+                    }
+                }
             }
         }
         print_enemy(g.enemies[active_floor][i]);
-        // temp[i] = &g.enemies[active_floor][i];
+        int res  = handle_damage(&g.enemies[active_floor][i]);
+        if(res != 0) {
+            return res;
+        }
     }
+        // temp[i] = &g.enemies[active_floor][i];
+    // message("4", A_BOLD);
+    // refresh();
+    // getch();
+    return 0;
 }
 
 
@@ -597,10 +643,13 @@ void print_elements()
     print_enchants();
     print_tools();
     // print_treasure();
-    move_enemies();
+    // move_enemies();
+    for(int i = 0; i < 3; i++) {
+        print_enemy(g.enemies[active_floor][i]);
+    }
 }
 int is_inRoom(Room r, Pos p) {
-    return (p.x > r.x && p.x < r.x + r.width && p.y > r.y && p.y < r.y + r.height);
+    return (p.x >= r.x && p.x <= r.x + r.width && p.y >= r.y && p.y <= r.y + r.height);
 }
 void print_treasure() {
     if(active_floor == MAX_FLOORS - 1 && mvinch(g.treasure.y, g.treasure.x) != ' ') {
@@ -795,7 +844,7 @@ int handle_pickup(int ch, Pos p) {
         g.gold_loc[active_floor][2].y = 0;
     }
     /*Foods*/
-    else if(ch == ('f' | COLOR_PAIR(3))) {
+    else if((ch & A_CHARTEXT) == 'f') {
         message("Press 'p' to pick up the food or other key to continue", COLOR_PAIR(12) | A_BLINK);
         input = getch();
         if(input == 'p' || input == 'P') {
@@ -830,7 +879,7 @@ int handle_pickup(int ch, Pos p) {
                 if(input == 'p' || input == 'P') {
                     g.tool_location[i].x = 0;
                     g.tool_location[i].y = 0;
-                    g.tools[i] = 1;
+                    g.tools[i] += tools_collect[i];
                     sprintf(s, "You found %s ! Press p to pick it up or any key to continue!", tools_name[i]);
 
                     print_message_box();
@@ -933,7 +982,7 @@ int resume_game() {
     print_floor();
     refresh();
     int val = player_movement();
-    if (val == 1 && val == 0) { /*losing is disabled*/
+    if (val == 1) { /*lose*/
         active_user->games_count++;
         active_user->gold += g.gold;
         active_user->score += active_floor * 10 + g.gold + (g.health_count + g.speed_count + g.damage_count) * 3 +
@@ -941,6 +990,30 @@ int resume_game() {
         Game temp = {0};
         memset(&active_user->floors_arr, 0, sizeof(Floor) * MAX_FLOORS);
         active_user->last_game = temp;
+        clear();
+        attron(COLOR_PAIR(3));
+        mvprintw(LINES / 2, (COLS - 21) / 2, "Game Over. You Lost!");
+        attroff(COLOR_PAIR(3));
+        refresh();
+        sleep(2);
+        getch();
+        return val;
+    }
+    if (val == 0) { /*win*/
+        active_user->games_count++;
+        active_user->gold += g.gold;
+        active_user->score += active_floor * 10 + g.gold + (g.health_count + g.speed_count + g.damage_count) * 3 +
+        (g.tools[1] + g.tools[2] + g.tools[3] + g.tools[4]) * 5;
+        Game temp = {0};
+        memset(&active_user->floors_arr, 0, sizeof(Floor) * MAX_FLOORS);
+        active_user->last_game = temp;
+        clear();
+        attron(COLOR_PAIR(2));
+        mvprintw(LINES / 2, (COLS - 10) / 2, "You Won !");
+        attroff(COLOR_PAIR(2));
+        refresh();
+        sleep(2);
+        getch();
         return val;
     }
 
@@ -978,6 +1051,7 @@ int player_movement() {
     refresh();
     int previos;
     int move = 0;
+    int damage = 0;
     // halfdelay(5);
     while(1) {
         
@@ -988,6 +1062,11 @@ int player_movement() {
             rooms_arr[active_floor][index].visible = 1;
         }
         if(check_pos.x != current->x || check_pos.y != current->y) {
+            damage = move_enemies();
+            if(damage == 1) {
+                return 1;
+            }
+
             int val = handle_parameters();
             if(val == 1) {
                 return 1;
@@ -997,6 +1076,10 @@ int player_movement() {
         attron(COLOR_PAIR(active_user->player_color));
         mvaddch(current->y, current->x, '@');
         attroff(COLOR_PAIR(active_user->player_color));
+        if(damage == 2) {
+            message("You got hitted by an Enemy!", COLOR_PAIR(3) | A_BLINK);
+            getch();
+        }
         handle_pickup(active_user->under_ch, *current);
         // print_floor();
         // attron(COLOR_PAIR(active_user->player_color));
@@ -1020,13 +1103,96 @@ int player_movement() {
         refresh();
         int ch = getch();
         if(ch == '1') {
-            food_menu();
+            int choice = food_menu();
+            print_floor();
+            attron(COLOR_PAIR(active_user->player_color));
+            mvaddch(current->y, current->x, '@');
+            attroff(COLOR_PAIR(active_user->player_color));
+            if(choice == 0) {
+                if(g.food[0] + g.food[3] != 0) {
+                    int random = rand() % (g.food[0] + g.food[3]);
+                    if(random < g.food[0]) {
+                        g.health += 10;
+                        g.hunger -= 10;
+                        g.food[0]--;
+                        print_message_box();
+                        message("You ate Normal food!", COLOR_PAIR(2) | A_BLINK);
+                        getch();
+                    }
+                    else {
+                        g.health -= 10;
+                        g.food[3]--;
+                        print_message_box();
+                        message("You ate Poisoned food!", COLOR_PAIR(3) | A_BLINK);
+                        getch();
+                    }
+                }
+                else {
+                    print_message_box();
+                    message("You dont have any normal food", COLOR_PAIR(6) | A_BLINK);
+                    getch();
+                }
+            }
+            else if(choice == 1) {
+                
+            }
+            else if(choice == 2) {
+                
+            }
+
         }
         else if(ch == '2') {
+            int choice = enchant_menu();
+            print_floor();
+            attron(COLOR_PAIR(active_user->player_color));
+            mvaddch(current->y, current->x, '@');
+            attroff(COLOR_PAIR(active_user->player_color));
+            if(choice == 0) {
+                g.health = 100;
+                print_message_box();
+                message("You used Health enchant", COLOR_PAIR(2) | A_BLINK);
+                getch();
+            }
+            else if(choice == 1) {
+                g.active_speed+=5;
+                print_message_box();
+                message("You used Speed enchant", COLOR_PAIR(2) | A_BLINK);
+                getch();
+            }
+            else if(choice == 2) {
+                g.active_damage += 5;
+                print_message_box();
+                message("You used Damage enchant", COLOR_PAIR(2) | A_BLINK);
+                getch();
+            }
+            else if (choice == 100) {
+                print_message_box();
+                message("You dont have that enchant", COLOR_PAIR(6) | A_BLINK);
+                getch();
+            }
 
         }
         else if(ch == '3') {
-
+            int choice = tool_menu();
+            print_floor();
+            attron(COLOR_PAIR(active_user->player_color));
+            mvaddch(current->y, current->x, '@');
+            attroff(COLOR_PAIR(active_user->player_color));
+            if(choice >= 0 && choice < 5) {
+                g.active_tool = choice;
+                print_message_box();
+                message("Your weapon has been set!", COLOR_PAIR(2) | A_BLINK);
+                getch();
+            }
+            else {
+                print_message_box();
+                message("You dont have that weapon!", COLOR_PAIR(6) | A_BLINK);
+                getch();
+            }
+        }
+        else if(ch == KEY_F(3)) {
+            g.health = 100;
+            g.hunger = 0;
         }
         else if(ch == ',' || ch == '<') {
             if((active_user->under_ch & A_CHARTEXT) == '<') {

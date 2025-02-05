@@ -57,7 +57,7 @@ typedef struct Floor
 
 typedef struct Enemy {
     Pos position;
-    uint8_t is_active : 1;
+    int8_t is_active : 2;
     uint8_t floor : 3;
     uint8_t followed : 3;
     uint8_t room_ind : 5;
@@ -68,6 +68,8 @@ typedef struct Enemy {
 typedef struct Game {
     uint16_t gold;
     int8_t health;
+    int16_t active_damage;
+    int16_t active_speed;
     uint8_t food[4];
     uint8_t active_tool : 3;
     uint8_t speed_count : 3;
@@ -115,5 +117,7 @@ void clear_messageBox();
 int food_menu();
 int enchant_menu();
 int tool_menu();
+int is_inRoom(Room r, Pos p);
+void print_message_box();
 
 #endif
