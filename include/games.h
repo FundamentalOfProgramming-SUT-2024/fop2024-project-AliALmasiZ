@@ -119,5 +119,7 @@ int enchant_menu();
 int tool_menu();
 int is_inRoom(Room r, Pos p);
 void print_message_box();
+int play_music(const char * path, int flag);
+
 
 #endif

@@ -18,7 +18,7 @@ const char* Normal_arrow = "\u27B3"; // 3 -> -77
 const char* Sword = "\u2694"; // 4 -> -108
 const char *tools_icon[] = {"⚒", "d", "\u2695", "\u27B3", "\u2694"};
 const char *tools_name[] = {"Mace", "Dagger", "Magic Wand", "Normal arrow", "Sword"};
-const int tools_collect[] = {1, 10, 8, 20, 1};
+int tools_collect[] = {1, 10, 8, 20, 1};
 
 const char* health_p = "\u2764";// 0 -> d
 const char* speed_p = "\u26A1"; // 1 
@@ -128,8 +128,11 @@ void print_rooms(int flag) {
     attron(A_BOLD);
     for(int i = 0; i < rooms_count[active_floor]; i++) {
         Room temp = rooms_arr[active_floor][i];
-        if(temp.visible == 0 && flag == 0)
+        if(is_inRoom(temp, active_user->ladders[active_floor][1]) && active_floor == MAX_FLOORS - 1) attron(COLOR_PAIR(12));
+        if(temp.visible == 0 && flag == 0) {
+            if(is_inRoom(temp, active_user->ladders[active_floor][1]) && active_floor == MAX_FLOORS - 1) attroff(COLOR_PAIR(12));
             continue;
+        }
         for(int j = temp.x; j <= temp.x + temp.width; j++) {
             for(int k = temp.y; k <= temp.y + temp.height; k++) {
                 if(k == temp.y || k == temp.y + temp.height)
@@ -147,9 +150,15 @@ void print_rooms(int flag) {
         for(int j = 0; j < temp.door_num || temp.door_wall[j] == -1; j++) {
             mvaddch(temp.y + temp.doors[j].y, temp.x + temp.doors[j].x, '+');
         }
+        if(is_inRoom(temp, active_user->ladders[active_floor][1]) && active_floor == MAX_FLOORS - 1) attroff(COLOR_PAIR(12));
     }
-    if((mvinch(active_user->ladders[active_floor][1].y, active_user->ladders[active_floor][1].x) & A_CHARTEXT) != ' ')
-        mvprintw(active_user->ladders[active_floor][1].y, active_user->ladders[active_floor][1].x, "<");
+    
+    if((mvinch(active_user->ladders[active_floor][1].y, active_user->ladders[active_floor][1].x) & A_CHARTEXT) != ' ') {
+        if(active_floor != MAX_FLOORS - 1)
+            mvprintw(active_user->ladders[active_floor][1].y, active_user->ladders[active_floor][1].x, "<");
+        else
+            mvprintw(active_user->ladders[active_floor][1].y, active_user->ladders[active_floor][1].x, "&");
+    }
     if((mvinch(active_user->ladders[active_floor][0].y, active_user->ladders[active_floor][0].x) & A_CHARTEXT) != ' ')
         mvprintw(active_user->ladders[active_floor][0].y, active_user->ladders[active_floor][0].x, ">");
     mvprintw(0, 0, " ");
@@ -570,6 +579,11 @@ void move_enemy(Enemy *e) {
 }
 int handle_damage(Enemy *en) {
     Enemy e = *en;
+    if(e.position.x == 0 && e.position.y == 0) {
+        return 0;
+    }
+    if(e.health <= 0)
+        return 0;
     if (abs(active_user->position.x - e.position.x) <= 1 && abs(active_user->position.y- e.position.y) <= 1) {
         g.health -= (e.type + 1) * 2;
         print_message_box();
@@ -593,7 +607,7 @@ int move_enemies() {
                 // message("1", A_BOLD);    
                 // refresh();
                 // getch();
-                g.enemies[active_floor][i].is_active = 0;
+                g.enemies[active_floor][i].is_active = 1;
                 g.enemies[active_floor][i].position.x = 0;
                 g.enemies[active_floor][i].position.y = 0;
             } else
@@ -673,6 +687,7 @@ void print_treasure() {
             mvaddch(temp.y + temp.doors[j].y, temp.x + temp.doors[j].x, '+');
         }
         attroff(COLOR_PAIR(12));
+        refresh();
     }
 }
 void generate_floor() {
@@ -698,11 +713,15 @@ void generate_floor() {
         active_user->last_game.treasure = rooms_arr[active_floor][rooms_count[active_floor] - 1];
         g.treasure = rooms_arr[active_floor][rooms_count[active_floor] - 1];
     }
-    if(active_floor < MAX_FLOORS - 1 && active_floor != 0) {
+    if(active_floor <= MAX_FLOORS - 1 && active_floor != 0) {
         ladder_room = rooms_arr[active_floor][rooms_count[active_floor] - 1];
         active_user->ladders[active_floor][1].x = ladder_room.x + rand() % (ladder_room.width - 1) + 1;
         active_user->ladders[active_floor][1].y = ladder_room.y + rand() % (ladder_room.height - 1) + 1;
         ladder_room.visible = 1;
+    }
+    if(active_floor == MAX_FLOORS - 1){
+        ladder_room.visible = 0;
+        g.treasure = ladder_room;
     }
     floors_arr[active_floor].rooms_count = rooms_count[active_floor];
     memcpy(floors_arr[active_floor].rooms_arr, rooms_arr[active_floor], rooms_count[active_floor] * sizeof(Room));
@@ -737,6 +756,9 @@ void print_message_box() {
     attroff(COLOR_PAIR(12));
     attron(COLOR_PAIR(6) | A_BOLD);
     mvprintw(1, COLS - 13, "Golds : %d ", g.gold);
+    mvprintw(1, COLS - 33, "Damage Enchant : %d ", g.active_damage);
+    mvprintw(1, COLS - 53, "Speed Enchant : %d ", g.active_speed);
+    mvprintw(1, COLS - 73, "floor : %d ", active_floor + 1);
     // mvprintw(1, 0, "Health : %d %% hunger : %d %% foods in inventory: %d", g.health, g.hunger, g.food);
     attroff(COLOR_PAIR(6) | A_BOLD);
     mvprintw(1, 0, "\u2764 \u2764 \u2764 \u2764 \u2764 \u2764 \u2764 \u2764 \u2764 \u2764");
@@ -790,6 +812,10 @@ void draw_hallway() {
     }
 }
 int handle_parameters() {
+    if(g.active_damage > 0)
+        g.active_damage--;
+    if(g.active_speed > 0)
+        g.active_speed--;
     g.hunger += active_user->difficulty + 1;
         if(g.hunger >= 100) {
             g.hunger = 100;
@@ -880,10 +906,11 @@ int handle_pickup(int ch, Pos p) {
                     g.tool_location[i].x = 0;
                     g.tool_location[i].y = 0;
                     g.tools[i] += tools_collect[i];
-                    sprintf(s, "You found %s ! Press p to pick it up or any key to continue!", tools_name[i]);
+                    tools_collect[i] = 1;
+                    sprintf(s, "You picked up %s", tools_name[i]);
 
                     print_message_box();
-                    message("You picked up %s", COLOR_PAIR(12));
+                    message(s, COLOR_PAIR(12));
                     free(s);
                     return 0;
                 }
@@ -974,6 +1001,7 @@ int init_game() {
 
 int resume_game() {
     g = active_user->last_game;
+    ladder_room = g.treasure;
     if(active_user->floors_arr[0].rooms_count == 0)
     {
         return 404;
@@ -982,6 +1010,7 @@ int resume_game() {
     print_floor();
     refresh();
     int val = player_movement();
+    play_music("", 0);
     if (val == 1) { /*lose*/
         active_user->games_count++;
         active_user->gold += g.gold;
@@ -1036,6 +1065,144 @@ int is_in_rooms(Pos p) {
     }
     return -1;
 }
+int handle_attack() {
+    int damage = 1;
+    int ch, dx, dy, range = 0;
+    if(g.active_damage > 0) {
+        damage = 2;
+    }
+    switch (g.active_tool)
+    {
+    case 0:
+        for(int i = 0; i < 3; i++) {
+            if(abs(active_user->position.x - g.enemies[active_floor][i].position.x) <= 1 &&
+            abs(active_user->position.y - g.enemies[active_floor][i].position.y) <= 1)
+            {
+                g.enemies[active_floor][i].health -= 5 * damage;
+                if(g.enemies[active_floor][i].health <= 0) {
+                    return 3;
+                }
+                return 2;
+
+            }
+        }
+        break;
+    
+    case 1:
+        damage *= 12;
+        range = 5;
+        break;
+
+    case 2:
+        damage *= 15;
+        range = 12;
+
+        break;
+    case 3:
+        damage *= 5;
+        range = 5;
+        break;
+    case 4:
+        for(int i = 0; i < 3; i++) {
+            if(abs(active_user->position.x - g.enemies[active_floor][i].position.x) <= 1 &&
+            abs(active_user->position.y - g.enemies[active_floor][i].position.y) <= 1)
+            {
+                g.enemies[active_floor][i].health -= 10 * damage;
+                if(g.enemies[active_floor][i].health <= 0) {
+                    return 3;
+                }
+                return 2;
+            }
+        }
+        break;
+    
+    default:
+        break;
+    }
+    if(range != 0) {
+
+        print_message_box();
+        message("Choose direction", COLOR_PAIR(5) | A_BLINK);
+        ch = getch();
+        switch (ch)
+        {
+            case 'w':
+            case 'W':
+                dx = 0;
+                dy = -1;
+                break;
+
+            case 's':
+            case 'S':
+                dx = 0;
+                dy = 1;
+                break;
+
+            case 'a':
+            case 'A':
+                dx = -1;
+                dy = 0;
+                break;
+
+            case 'D':
+            case 'd':
+                dx = 1;
+                dy = 0;
+                break;
+
+            case 'q':
+            case 'Q':
+                dx = -1;
+                dy = -1;
+                break;
+
+            case 'e':
+            case 'E':
+                dx = 1;
+                dy = -1;
+                break;
+
+            case 'Z':
+            case 'z':
+                dx = -1;
+                dy = 1;
+                break;
+            
+            case 'x':
+            case 'X':
+                dx = 1;
+                dy = 1;
+                break;
+
+            default :
+                return 1;
+        }
+        Pos p = active_user->position;
+        for(int i = 0; i < range; i++) {
+            p.x += dx;
+            p.y += dy;
+            for(int j = 0; j < 3; j++) {
+                if(p.x == g.enemies[active_floor][j].position.x && p.y == g.enemies[active_floor][j].position.y) {
+                    g.enemies[active_floor][j].health -= damage;
+                    if(g.enemies[active_floor][j].health <= 0) {
+                        return 3;
+                    }
+                    return 2;
+                }
+            }
+            int temp = mvinch(p.y, p.x);
+            if(temp == (ACS_HLINE | A_BOLD) || temp == (ACS_VLINE | A_BOLD) || temp == (ACS_ULCORNER | A_BOLD) ||
+            temp == (ACS_LLCORNER | A_BOLD) || temp == (ACS_URCORNER | A_BOLD) || temp == (ACS_LRCORNER | A_BOLD) || 
+            temp == ('+' | A_BOLD)) {
+                g.tool_location[g.active_tool].x = p.x - dx;
+                g.tool_location[g.active_tool].y = p.y - dy;
+                return 0;
+            }
+        }
+    }
+
+    return 0;
+}
 
 int player_movement() {
     rooms_arr[0][0].visible = 1;
@@ -1053,23 +1220,37 @@ int player_movement() {
     int move = 0;
     int damage = 0;
     // halfdelay(5);
+    int music = 0;
     while(1) {
-        
+        move++;
         int index = is_in_rooms(*current);
+        if(index < 0) {
+            if(active_floor == MAX_FLOORS - 1 && rooms_arr[active_floor][-index - 2].x == ladder_room.x && rooms_arr[active_floor][-index - 2].y == ladder_room.y )
+            {
+                if(music == 0) {
+                    play_music("./music/Mohreyemar.mp3", 1);
+                    music++;
+                }
+            }
+        }
+        if((active_user->under_ch & A_CHARTEXT) == '&')
+            return 0;
         if(index >= 0)
         {
             floors_arr[active_floor].rooms_arr[index].visible = 1;
             rooms_arr[active_floor][index].visible = 1;
         }
         if(check_pos.x != current->x || check_pos.y != current->y) {
-            damage = move_enemies();
-            if(damage == 1) {
-                return 1;
-            }
+            if(g.active_speed == 0 || move % 2 == 0) {
+                damage = move_enemies();
+                if(damage == 1) {
+                    return 1;
+                }
 
-            int val = handle_parameters();
-            if(val == 1) {
-                return 1;
+                int val = handle_parameters();
+                if(val == 1) {
+                    return 1;
+                }
             }
         }
         print_floor();
@@ -1077,6 +1258,7 @@ int player_movement() {
         mvaddch(current->y, current->x, '@');
         attroff(COLOR_PAIR(active_user->player_color));
         if(damage == 2) {
+            damage = 0;
             message("You got hitted by an Enemy!", COLOR_PAIR(3) | A_BLINK);
             getch();
         }
@@ -1134,10 +1316,38 @@ int player_movement() {
                 }
             }
             else if(choice == 1) {
+                if(g.food[1] != 0) {
+                    move = 0;
+                    g.active_speed += 3;
+                    g.health += 10;
+                    g.hunger -= 10;
+                    g.food[1]--;
+                    print_message_box();
+                    message("You ate Speed food!", COLOR_PAIR(2) | A_BLINK);
+                    getch();
+                }
+                else {
+                    print_message_box();
+                    message("You dont have any speed food", COLOR_PAIR(6) | A_BLINK);
+                    getch();
+                }
                 
             }
             else if(choice == 2) {
-                
+                if(g.food[2] != 0) {
+                    g.health += 10;
+                    g.hunger -= 10;
+                    g.active_damage += 3;
+                    g.food[1]--;
+                    print_message_box();
+                    message("You ate Damage food!", COLOR_PAIR(2) | A_BLINK);
+                    getch();
+                }
+                else {
+                    print_message_box();
+                    message("You dont have any damage food", COLOR_PAIR(6) | A_BLINK);
+                    getch();
+                }
             }
 
         }
@@ -1155,6 +1365,7 @@ int player_movement() {
             }
             else if(choice == 1) {
                 g.active_speed+=5;
+                move = 0;
                 print_message_box();
                 message("You used Speed enchant", COLOR_PAIR(2) | A_BLINK);
                 getch();
@@ -1189,6 +1400,48 @@ int player_movement() {
                 message("You dont have that weapon!", COLOR_PAIR(6) | A_BLINK);
                 getch();
             }
+        }
+        else if(ch == ' ') {
+            int at = handle_attack();
+            if(at == 3) {
+                print_message_box();
+                message("You killed an enemy", COLOR_PAIR(2) | A_BLINK);
+                refresh();
+                sleep(1);
+                getch();
+            }
+            else if(at == 2) {
+                print_message_box();
+                message("You hit an enemy", COLOR_PAIR(2) | A_BLINK);
+                refresh();
+                sleep(1);
+                getch();
+            }
+            else if(at == 1) {
+                print_message_box();
+                message("Invalid Direction", COLOR_PAIR(2) | A_BLINK);
+                sleep(1);
+                getch();
+            }
+            damage = move_enemies();
+            if(damage == 1) {
+                return 1;
+            }
+
+            int val = handle_parameters();
+            if(val == 1) {
+                return 1;
+            }
+        }
+        else if(ch == KEY_F(4)) {
+            active_floor++;
+            current->x = rooms_arr[active_floor][0].x + 1;
+            current->y = rooms_arr[active_floor][0].y + 1;
+        }
+        else if (ch == KEY_F(5)) {
+            active_floor--;
+            current->x = rooms_arr[active_floor][0].x + 1;
+            current->y = rooms_arr[active_floor][0].y + 1;
         }
         else if(ch == KEY_F(3)) {
             g.health = 100;
