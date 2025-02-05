@@ -322,14 +322,29 @@ int pregame_menu() {
             active_user->under_ch = mvinch(active_user->position.x, active_user->position.y);
             init_game();
             resume_game();
+            clear();
+            attron(COLOR_PAIR(3) | A_BOLD);
+            mvprintw(LINES / 2, (COLS - 15) / 2, "Saving Game...");
+            attroff(COLOR_PAIR(3) | A_BOLD);
+            refresh();
+            usleep(1000000);
+            save_users(&arr, users_count);
             choose = menu("PreGame menu ", 6, options, 5);
         }
         else if(choose == 1) {
             int val = resume_game();
             if(val == 404)
                 choose = menu("No Games Found!", 3, options, 5);
-            else
+            else{
                 choose = menu("PreGame menu ", 6, options, 5);
+                clear();
+                attron(COLOR_PAIR(3) | A_BOLD);
+                mvprintw(LINES / 2, (COLS - 15) / 2, "Saving Game...");
+                attroff(COLOR_PAIR(3) | A_BOLD);
+                refresh();
+                usleep(1000000);
+                save_users(&arr, users_count);
+            }
         }
         else if(choose == 2) {
             scoreboard();

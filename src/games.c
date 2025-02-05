@@ -884,6 +884,7 @@ int handle_pickup(int ch, Pos p) {
                     g.food_loc[active_floor][i].x = 0;
                     g.food_loc[active_floor][i].y = 0;
                     g.food[g.food_type[active_floor][i]]++;
+                    active_user->under_ch = 0;
                     print_message_box();
                     message("You picked up a food", COLOR_PAIR(12));
                     return 0;
@@ -1049,6 +1050,7 @@ int resume_game() {
     else if(val == 27)
         active_user->last_game = g;
     active_user->last_game = g;
+    
 }
 
 int is_in_rooms(Pos p) {
@@ -1294,8 +1296,8 @@ int player_movement() {
                 if(g.food[0] + g.food[3] != 0) {
                     int random = rand() % (g.food[0] + g.food[3]);
                     if(random < g.food[0]) {
-                        g.health += 10;
-                        g.hunger -= 10;
+                        g.health += 30;
+                        g.hunger -= 30;
                         g.food[0]--;
                         print_message_box();
                         message("You ate Normal food!", COLOR_PAIR(2) | A_BLINK);
@@ -1319,8 +1321,8 @@ int player_movement() {
                 if(g.food[1] != 0) {
                     move = 0;
                     g.active_speed += 3;
-                    g.health += 10;
-                    g.hunger -= 10;
+                    g.health += 20;
+                    g.hunger -= 20;
                     g.food[1]--;
                     print_message_box();
                     message("You ate Speed food!", COLOR_PAIR(2) | A_BLINK);
@@ -1335,10 +1337,10 @@ int player_movement() {
             }
             else if(choice == 2) {
                 if(g.food[2] != 0) {
-                    g.health += 10;
-                    g.hunger -= 10;
+                    g.health += 20;
+                    g.hunger -= 20;
                     g.active_damage += 3;
-                    g.food[1]--;
+                    g.food[2]--;
                     print_message_box();
                     message("You ate Damage food!", COLOR_PAIR(2) | A_BLINK);
                     getch();
@@ -1359,11 +1361,13 @@ int player_movement() {
             attroff(COLOR_PAIR(active_user->player_color));
             if(choice == 0) {
                 g.health = 100;
+                g.health_count--;
                 print_message_box();
                 message("You used Health enchant", COLOR_PAIR(2) | A_BLINK);
                 getch();
             }
             else if(choice == 1) {
+                g.speed_count--;
                 g.active_speed+=5;
                 move = 0;
                 print_message_box();
@@ -1371,6 +1375,7 @@ int player_movement() {
                 getch();
             }
             else if(choice == 2) {
+                g.damage_count--;
                 g.active_damage += 5;
                 print_message_box();
                 message("You used Damage enchant", COLOR_PAIR(2) | A_BLINK);
